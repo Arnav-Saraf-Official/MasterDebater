@@ -53,6 +53,7 @@
 		"wait-on": "^8.0.0"
 	},
 	"dependencies": {
+		"@lucide/svelte": "^1.14.0",
 		"express": "^5.0.0"
 	}
 }

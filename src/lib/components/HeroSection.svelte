@@ -1,9 +1,10 @@
 <script lang="ts">
 	import AnimateOnScroll from './AnimateOnScroll.svelte';
+	import Typewriter from './Typewriter.svelte';
 </script>
 
 <section class="flex min-h-[70vh] flex-col justify-center px-6 py-section md:px-12">
-	<div class="mx-auto w-full max-w-[680px]">
+	<div class="mx-auto w-full max-w-[80vw]">
 		<!-- Overline — subtle, muted, fade-in first -->
 		<AnimateOnScroll animation="animate-fade-in" stagger={1}>
 			<p class="text-sm font-medium tracking-widest text-accent uppercase">Desktop App</p>
@@ -11,7 +12,7 @@
 
 		<!-- Main heading — right-aligned, Cormorant serif -->
 		<AnimateOnScroll animation="animate-fade-in-up" stagger={2}>
-			<h1 class="mt-4 font-heading text-right text-5xl leading-tight font-medium text-foreground md:text-7xl">
+			<h1 class="mt-4 font-heading text-5xl leading-tight font-medium text-foreground md:text-7xl">
 				MasterDebater
 			</h1>
 		</AnimateOnScroll>
@@ -19,8 +20,12 @@
 		<!-- Tagline — left-aligned, Karla body -->
 		<AnimateOnScroll animation="animate-fade-in-up" stagger={3}>
 			<p class="mt-6 text-lg leading-relaxed text-secondary md:text-xl">
-				Sharpen your arguments. Challenge your thinking. A thoughtful space for structured debate
-				preparation.
+				Sharpen your
+				<span class="font-medium text-foreground">
+					<Typewriter words={['arguments.', 'persuasion.', 'logic.', 'flows.']} />
+				</span>
+				<br />
+				Use our next-gen tools to take your debate to the next level.
 			</p>
 		</AnimateOnScroll>
 
