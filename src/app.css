@@ -44,7 +44,7 @@
 	--color-amber-warm-light: #f59e0b;
 
 	/* Custom spacing for editorial feel */
-	--spacing-section: 3rem;
+	--spacing-section: 1rem;
 
 	/* Animation durations */
 	--animate-duration-fast: 50ms;
@@ -114,6 +114,7 @@
 		font-family: var(--font-body);
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
+		scroll-behavior: smooth;
 	}
 
 	body {
@@ -163,7 +164,7 @@
 
 	/* Press feedback — subtle scale on click */
 	.press-feedback {
-		transition: transform 50ms ease-out;
+		transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 	}
 	.press-feedback:active {
 		transform: scale(0.97);

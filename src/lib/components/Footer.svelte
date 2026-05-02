@@ -12,9 +12,10 @@
 
 		<AnimateOnScroll animation="animate-fade-in" stagger={2}>
 			<nav class="flex gap-6">
-				<a href="#" class="transition-colors hover:text-primary">Privacy</a>
-				<a href="#" class="transition-colors hover:text-primary">Terms</a>
-				<a href="#" class="transition-colors hover:text-primary">Contact</a>
+				<a href="/" class="transition-colors hover:text-primary">Privacy Policy</a>
+				<a href="/" class="transition-colors hover:text-primary">Terms of Use</a>
+				<a href="/" class="transition-colors hover:text-primary">Contact</a>
+				<a href="/" class="transition-colors hover:text-primary">License</a>
 			</nav>
 		</AnimateOnScroll>
 	</div>

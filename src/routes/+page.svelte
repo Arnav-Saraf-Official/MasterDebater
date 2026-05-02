@@ -2,9 +2,7 @@
 	import HeroSection from '$lib/components/HeroSection.svelte';
 	import FeatureCard from '$lib/components/FeatureCard.svelte';
 	import CtaSection from '$lib/components/CtaSection.svelte';
-	import Footer from '$lib/components/Footer.svelte';
 	import AnimateOnScroll from '$lib/components/AnimateOnScroll.svelte';
-	import Navbar from '$lib/components/navbar.svelte';
 </script>
 
 <svelte:head>
@@ -17,7 +15,6 @@
 
 <div class="min-h-screen bg-background">
 	<!-- Navigation — minimal, cream background, right-aligned brand -->
-	<Navbar />
 	<HeroSection />
 
 	<!-- Features section -->
@@ -37,5 +34,4 @@
 	</section>
 
 	<CtaSection />
-	<Footer />
 </div>
