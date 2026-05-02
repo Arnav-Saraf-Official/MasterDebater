@@ -7,7 +7,17 @@
 	<div class="mx-auto w-full max-w-[80vw]">
 		<!-- Overline — subtle, muted, fade-in first -->
 		<AnimateOnScroll animation="animate-fade-in" stagger={1}>
-			<p class="text-sm font-medium tracking-widest text-accent uppercase">Desktop App</p>
+			<p class="text-sm font-medium tracking-widest text-accent uppercase">
+				<Typewriter
+					words={[
+						'AI powered',
+						'Multitool',
+						'Created by Arnav S',
+						'All kinds of debate',
+						'Currently on web'
+					]}
+				/>
+			</p>
 		</AnimateOnScroll>
 
 		<!-- Main heading — right-aligned, Cormorant serif -->
@@ -42,7 +52,7 @@
 					href="#cta"
 					class="press-feedback inline-flex items-center rounded-lg bg-card px-6 py-3 text-sm font-medium text-foreground ring-1 ring-border transition-colors hover:bg-cream-200"
 				>
-					Get Started
+					Download
 				</a>
 			</div>
 		</AnimateOnScroll>

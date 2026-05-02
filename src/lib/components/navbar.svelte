@@ -12,7 +12,7 @@
 		onmouseleave={() => (hovering = false)}
 	>
 		<!-- Brand & Version -->
-		<nav class="flex shrink-0 items-center gap-3 px-6 py-3">
+		<a href="/" class="flex shrink-0 items-center gap-3 px-6 py-3">
 			<span class="text-primary-muted font-heading text-xl font-medium tracking-wide"
 				>MasterDebater</span
 			>
@@ -20,17 +20,17 @@
 				class="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold tracking-widest text-primary uppercase"
 				>v0.1</span
 			>
-		</nav>
+		</a>
 
 		<!-- Expanded Content -->
 		{#if hovering}
 			<div transition:slide={{ axis: 'x', duration: 400 }} class="flex items-center">
 				<div class="h-6 w-[1px] bg-primary/20"></div>
 				<a
-					href="https://google.com"
+					href="/about"
 					class="press-feedback mx-4 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium whitespace-nowrap text-on-primary transition-colors hover:bg-primary/90"
 				>
-					MasterDeCard
+					About
 				</a>
 				<a class="settings press-feedback mr-4 text-primary" href="/settings" aria-label="Settings">
 					<Settings size={20} strokeWidth={2.5} />
@@ -77,7 +77,7 @@
 		transform: rotate(180deg);
 	}
 	.settings {
-		transition: all 0.3s ease;
+		transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 	}
 	.settings:hover {
 		color: color-mix(in srgb, var(--color-primary), black 30%);
