@@ -8,6 +8,9 @@ node_modules
 /.svelte-kit
 /build
 
+# Electron
+/dist-electron
+
 # OS
 .DS_Store
 Thumbs.db

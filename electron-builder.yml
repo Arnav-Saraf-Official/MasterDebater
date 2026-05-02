@@ -1,0 +1,28 @@
+directories:
+  output: dist-electron
+
+files:
+  - build/**/*
+  - dist-electron/main.js
+  - dist-electron/main.js.map
+  - dist-electron/server.js
+  - dist-electron/server.js.map
+  - dist-electron/preload.js
+  - dist-electron/preload.js.map
+  - package.json
+
+win:
+  target: nsis
+  icon: static/icon.png
+
+mac:
+  target: dmg
+  icon: static/icon.icns
+
+linux:
+  target: AppImage
+  icon: static/icon.png
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true

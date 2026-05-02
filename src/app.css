@@ -1,0 +1,189 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+/* ========================================
+   Vanilla Bean Design System — MasterDebater
+   ======================================== */
+
+/* Google Fonts — Cormorant for headings, Karla for body */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Karla:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap');
+
+/* ========================================
+   Theme Tokens
+   ======================================== */
+@theme {
+	/* Font families */
+	--font-heading: 'Cormorant', ui-serif, Georgia, serif;
+	--font-body: 'Karla', ui-sans-serif, system-ui, sans-serif;
+
+	/* Color palette — vanilla bean */
+	--color-primary: #d97706;
+	--color-on-primary: #ffffff;
+	--color-secondary: #76654cff;
+	--color-accent: #c28f58ff;
+	--color-background: #fff8ddff;
+	--color-foreground: #4b320eff;
+	--color-card: #f7e3bdff;
+	--color-card-foreground: #583f0bff;
+	--color-muted: #f6f6f6;
+	--color-muted-foreground: #8b8164ff;
+	--color-border: #eeeded;
+	--color-destructive: #dc2626;
+	--color-ring: #78716c;
+
+	/* Extended neutrals */
+	--color-cream-50: #fffdf7;
+	--color-cream-100: #fffbeb;
+	--color-cream-200: #fff5d4;
+	--color-cream-300: #fde68a;
+	--color-stone-warm: #78716c;
+	--color-stone-warm-light: #a8a29e;
+	--color-amber-warm: #d97706;
+	--color-amber-warm-light: #f59e0b;
+
+	/* Custom spacing for editorial feel */
+	--spacing-section: 6rem;
+
+	/* Animation durations */
+	--animate-duration-fast: 50ms;
+	--animate-duration-normal: 150ms;
+	--animate-duration-slow: 300ms;
+	--animate-duration-entrance: 500ms;
+
+	/* Keyframe animations */
+	--animate-fade-in-up: fade-in-up 0.5s ease-out both;
+	--animate-fade-in: fade-in 0.4s ease-out both;
+	--animate-scale-in: scale-in 0.3s ease-out both;
+	--animate-slide-in-right: slide-in-right 0.4s ease-out both;
+}
+
+/* ========================================
+   Keyframes
+   ======================================== */
+@keyframes fade-in-up {
+	from {
+		opacity: 0;
+		transform: translateY(16px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes scale-in {
+	from {
+		opacity: 0;
+		transform: scale(0.97);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes slide-in-right {
+	from {
+		opacity: 0;
+		transform: translateX(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+/* ========================================
+   Base Styles
+   ======================================== */
+@layer base {
+	html {
+		background-color: var(--color-background);
+		color: var(--color-foreground);
+		font-family: var(--font-body);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	body {
+		min-height: 100vh;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-family: var(--font-heading);
+		font-weight: 500;
+	}
+}
+
+/* ========================================
+   Animation Utilities
+   ======================================== */
+@layer utilities {
+	/* Stagger delay utilities */
+	.stagger-1 {
+		animation-delay: 0ms;
+	}
+	.stagger-2 {
+		animation-delay: 80ms;
+	}
+	.stagger-3 {
+		animation-delay: 160ms;
+	}
+	.stagger-4 {
+		animation-delay: 240ms;
+	}
+	.stagger-5 {
+		animation-delay: 320ms;
+	}
+	.stagger-6 {
+		animation-delay: 400ms;
+	}
+
+	/* Press feedback — subtle scale on click */
+	.press-feedback {
+		transition: transform 50ms ease-out;
+	}
+	.press-feedback:active {
+		transform: scale(0.97);
+	}
+
+	/* Subtle hover lift */
+	.hover-lift {
+		transition:
+			transform 100ms ease-out,
+			box-shadow 100ms ease-out;
+	}
+	.hover-lift:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 12px rgba(120, 113, 108, 0.08);
+	}
+}
+
+/* ========================================
+   Reduced Motion
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
