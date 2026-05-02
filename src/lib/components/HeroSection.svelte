@@ -48,12 +48,6 @@
 				>
 					Explore Features
 				</a>
-				<a
-					href="#cta"
-					class="press-feedback inline-flex items-center rounded-lg bg-card px-6 py-3 text-sm font-medium text-foreground ring-1 ring-border transition-colors hover:bg-cream-200"
-				>
-					Download
-				</a>
 			</div>
 		</AnimateOnScroll>
 	</div>

@@ -19,8 +19,8 @@
 				MasterDebater
 			</h1>
 			<p class="mt-6 max-w-2xl text-lg leading-relaxed text-secondary md:text-xl">
-				The ultimate companion for structured debate. Built for precision, performance, and
-				completely offline use.
+				The ultimate companion for structured debate. Built for precision, performance, and a
+				seamless user experience.
 			</p>
 		</AnimateOnScroll>
 	</div>
@@ -46,8 +46,8 @@
 						to argument structuring, we leave no room for error.
 					</li>
 					<li>
-						<strong>Performance:</strong> Built to be fast, reliable, and completely offline-capable.
-						Your debate prep is available whenever you need it, instantly.
+						<strong>Performance:</strong> Built to be fast, reliable, and accessible everywhere. Your
+						debate prep is available whenever you need it, instantly.
 					</li>
 					<li>
 						<strong>Innovation:</strong> Constantly iterating to provide debaters with modern tools that
@@ -69,7 +69,7 @@
 						href="https://github.com/Arnav-Saraf-Official/MasterDebater"
 						target="_blank"
 						rel="noopener noreferrer">GitHub</a
-					>. Please read the lisence before viewing or contributing to the project.
+					>. Please read the license before viewing or contributing to the project.
 				</p>
 			</article>
 		</AnimateOnScroll>

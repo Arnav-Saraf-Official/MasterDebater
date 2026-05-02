@@ -9,7 +9,7 @@
 	<title>MasterDebater</title>
 	<meta
 		name="description"
-		content="A thoughtful desktop app for structured debate preparation and argument building."
+		content="A thoughtful tool for structured debate preparation and argument building."
 	/>
 </svelte:head>
 

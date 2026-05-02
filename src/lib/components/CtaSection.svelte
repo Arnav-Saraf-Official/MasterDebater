@@ -12,16 +12,16 @@
 
 		<AnimateOnScroll animation="animate-fade-in-up" stagger={2}>
 			<p class="mt-4 text-lg text-muted-foreground">
-				Download MasterDebater and start building stronger arguments today.
+				Master your debates and start building stronger arguments today.
 			</p>
 		</AnimateOnScroll>
 
 		<AnimateOnScroll animation="animate-scale-in" stagger={3}>
 			<button
 				class="press-feedback mt-8 inline-flex items-center rounded-lg bg-accent px-8 py-4 text-base font-semibold text-on-primary shadow-md transition-all hover:bg-amber-warm-light hover:shadow-lg"
-				onclick={() => (window.location.href = '/download')}
+				onclick={() => (window.location.href = '/about')}
 			>
-				Download for Free
+				Get Started
 			</button>
 		</AnimateOnScroll>
 	</div>

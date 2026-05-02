@@ -1,4 +1,4 @@
 # MasterDebater
-Desktop application with debate specific AI tools to level up your debate.
+A suite of debate-specific AI tools designed to level up your debate preparation.
 
 In development.
