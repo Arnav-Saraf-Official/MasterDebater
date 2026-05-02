@@ -1,8 +1,12 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
-import { createServer } from './server';
+import { fileURLToPath } from 'node:url';
+import { createServer } from './server.js';
 
-const isDev = !app.isPackaged;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const isDev = !!process.env.ELECTRON_DEV || !app.isPackaged;
 const PORT = 3456;
 
 let mainWindow: BrowserWindow | null = null;
@@ -26,11 +30,9 @@ async function createWindow(): Promise<void> {
 	});
 
 	if (isDev) {
-		// Development: load from SvelteKit dev server (HMR)
-		await mainWindow.loadURL('http://localhost:5173');
+		await mainWindow.loadURL('http://localhost:5188');
 		mainWindow.webContents.openDevTools();
 	} else {
-		// Production: load from local Express server (serves static build + API)
 		await mainWindow.loadURL(`http://localhost:${PORT}`);
 	}
 
