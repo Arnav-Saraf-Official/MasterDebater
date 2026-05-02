@@ -1,5 +1,9 @@
-import express from 'express';
+import express, { type Request, type Response } from 'express';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Create and start the local API server.
@@ -16,7 +20,7 @@ export async function createServer(port: number): Promise<void> {
 	// ─── API Routes ───────────────────────────────────────────────
 
 	// Health check
-	app.get('/api/health', (_req, res) => {
+	app.get('/api/health', (_req: Request, res: Response) => {
 		res.json({ status: 'ok', timestamp: Date.now() });
 	});
 
@@ -41,7 +45,7 @@ export async function createServer(port: number): Promise<void> {
 		app.use(express.static(buildPath));
 
 		// SPA fallback — all non-API routes serve index.html
-		app.get('*', (_req, res) => {
+		app.get('*', (_req: Request, res: Response) => {
 			res.sendFile(path.join(buildPath, 'index.html'));
 		});
 	}
