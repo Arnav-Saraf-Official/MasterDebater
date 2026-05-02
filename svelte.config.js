@@ -7,12 +7,11 @@ const config = {
 		runes: ({ filename }) => (filename.split(/[/\\]/).includes('node_modules') ? undefined : true)
 	},
 	kit: {
-		// Static adapter required for Electron — serves files from disk, not a Node server
+		// Optimized for static hosting (e.g. GitHub Pages)
 		adapter: adapter({
 			pages: 'build',
 			assets: 'build',
-			fallback: 'index.html',
-			prerender: 'all',
+			fallback: '404.html',
 			strict: true
 		})
 	}
