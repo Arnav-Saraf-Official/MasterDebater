@@ -1,6 +1,7 @@
 <script>
 	import { slide } from 'svelte/transition';
-	import { Menu, Settings } from '@lucide/svelte';
+	import { Menu, Settings, User } from '@lucide/svelte';
+	import { page } from '$app/state';
 	let hovering = $state(false);
 </script>
 
@@ -32,6 +33,11 @@
 				>
 					About
 				</a>
+				{#if page.url.pathname !== '/login'}
+					<a class="press-feedback mr-4 text-primary" href="/login" aria-label="Login">
+						<User size={20} strokeWidth={2.5} />
+					</a>
+				{/if}
 				<a class="settings press-feedback mr-4 text-primary" href="/settings" aria-label="Settings">
 					<Settings size={20} strokeWidth={2.5} />
 				</a>

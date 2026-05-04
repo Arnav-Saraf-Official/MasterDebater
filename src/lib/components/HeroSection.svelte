@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AnimateOnScroll from './AnimateOnScroll.svelte';
 	import Typewriter from './Typewriter.svelte';
+	import { page } from '$app/state';
 </script>
 
 <section class="flex min-h-[70vh] flex-col justify-center px-6 py-section md:px-12">
@@ -14,7 +15,7 @@
 						'Multitool',
 						'Created by Arnav S',
 						'All kinds of debate',
-						'Currently on web'
+						'Currently on desktop'
 					]}
 				/>
 			</p>
@@ -43,11 +44,19 @@
 		<AnimateOnScroll animation="animate-fade-in-up" stagger={4}>
 			<div class="mt-8 flex flex-wrap gap-4">
 				<a
-					href="#features"
+					href="/#features"
 					class="press-feedback inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-medium text-on-primary transition-colors hover:bg-primary/90"
 				>
 					Explore Features
 				</a>
+				{#if page.url.pathname !== '/login'}
+					<a
+						href="/login"
+						class="press-feedback inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-medium text-on-primary transition-colors hover:bg-primary/90"
+					>
+						Login
+					</a>
+				{/if}
 			</div>
 		</AnimateOnScroll>
 	</div>
