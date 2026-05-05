@@ -2,6 +2,8 @@ import { app, BrowserWindow } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from './server.js';
+import keytar from 'keytar';
+import { ipcMain } from 'electron';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -53,7 +55,9 @@ function handleDeepLink(url: string) {
 
 	if (mainWindow) {
 		const route = url.replace('masterdebater://', '');
-		const targetUrl = isDev ? `http://localhost:5188/${route}` : `http://localhost:${PORT}/${route}`;
+		const targetUrl = isDev
+			? `http://localhost:5188/${route}`
+			: `http://localhost:${PORT}/${route}`;
 		console.log('[MasterDebater] Navigating to target:', targetUrl);
 		mainWindow.loadURL(targetUrl).catch((err) => {
 			console.error('[MasterDebater] Failed to load deep link URL:', err);
@@ -112,6 +116,47 @@ async function createWindow(): Promise<void> {
 		}
 	}
 }
+
+const SERVICE = 'masterdebater';
+const ACCOUNT = 'api_key';
+
+// Save API key
+ipcMain.handle('secure:set-api-key', async (_, key: string) => {
+	await keytar.setPassword(SERVICE, ACCOUNT, key);
+	return true;
+});
+
+// Get API key
+ipcMain.handle('secure:get-api-key', async () => {
+	return await keytar.getPassword(SERVICE, ACCOUNT);
+});
+
+// Delete API key
+ipcMain.handle('secure:delete-api-key', async () => {
+	await keytar.deletePassword(SERVICE, ACCOUNT);
+	return true;
+});
+
+ipcMain.handle('ai:request', async (_, payload) => {
+	const apiKey = await keytar.getPassword(SERVICE, ACCOUNT);
+
+	if (!apiKey) {
+		throw new Error('No API key stored');
+	}
+
+	const res = await fetch('https://masterdebaterapp.workers.dev/chat', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			api_key: apiKey,
+			...payload
+		})
+	});
+
+	return await res.json();
+});
 
 app.whenReady().then(() => {
 	console.log('[MasterDebater] App ready');

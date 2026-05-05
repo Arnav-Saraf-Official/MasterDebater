@@ -1,12 +1,27 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
 	import HeroSection from '$lib/components/HeroSection.svelte';
-	import { Mail, Lock, LogIn } from '@lucide/svelte';
+	import { Mail, Lock, LogIn, LogOut } from '@lucide/svelte';
 
 	let email = $state('');
 	let password = $state('');
 	let loading = $state(false);
 	let message = $state({ type: '', text: '' });
+	let session = $state<any>(null);
+
+	$effect(() => {
+		supabase.auth.getSession().then(({ data: { session: s } }) => {
+			session = s;
+		});
+
+		const {
+			data: { subscription }
+		} = supabase.auth.onAuthStateChange((_event, s) => {
+			session = s;
+		});
+
+		return () => subscription.unsubscribe();
+	});
 
 	// -----------------------------
 	// EMAIL LOGIN (CLEANED UP)
@@ -17,7 +32,7 @@
 		message = { type: '', text: '' };
 
 		try {
-			const { error } = await supabase.auth.signInWithPassword({
+			const { data: signInData, error } = await supabase.auth.signInWithPassword({
 				email,
 				password
 			});
@@ -38,6 +53,19 @@
 					};
 				}
 			} else {
+				if (signInData?.session) {
+					const res = await fetch('/', {
+						method: 'POST',
+						headers: { Authorization: `Bearer ${signInData.session.access_token}` }
+					});
+					if (res.ok) {
+						const data = await res.json();
+						if (data.api_key) localStorage.setItem('masterdebater_api_key', data.api_key);
+					} else {
+						const errData = await res.json();
+						console.error('[Auth] API key generation failed:', errData.error);
+					}
+				}
 				message = { type: 'success', text: 'Logged in successfully!' };
 				window.location.href = '/tools';
 			}
@@ -61,13 +89,34 @@
 			message = { type: 'error', text: error.message };
 		}
 	}
+
+	async function handleLogout() {
+		const { error } = await supabase.auth.signOut();
+		localStorage.removeItem('masterdebater_api_key');
+		if (error) {
+			message = { type: 'error', text: error.message };
+		} else {
+			message = { type: 'success', text: 'Logged out successfully.' };
+		}
+	}
 </script>
 
 <svelte:head>
 	<title>Login | MasterDebater</title>
 </svelte:head>
 
-<div class="grid min-h-[calc(100vh-120px)] w-full grid-cols-1 lg:grid-cols-2">
+<div class="relative grid min-h-[calc(100vh-120px)] w-full grid-cols-1 lg:grid-cols-2">
+	{#if session}
+		<div class="stagger-1 absolute top-8 right-8 z-10 animate-fade-in">
+			<button
+				onclick={handleLogout}
+				class="press-feedback flex items-center gap-2 rounded-xl bg-background/80 px-4 py-2 text-sm font-semibold text-foreground shadow-sm ring-1 ring-border backdrop-blur-sm transition-all hover:bg-cream-200"
+			>
+				<LogOut size={16} class="text-primary" />
+				Logout
+			</button>
+		</div>
+	{/if}
 	<!-- Left Side: Hero Section -->
 	<div class="hidden flex-col justify-center border-r border-border bg-background lg:flex">
 		<HeroSection />

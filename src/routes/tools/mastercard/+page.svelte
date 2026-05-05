@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Send, UploadCloud, Link as LinkIcon, Type, FileText, ChevronDown } from '@lucide/svelte';
+	import { supabase } from '$lib/supabase';
 
 	let messages = $state([
 		{
@@ -29,7 +30,7 @@
 		}
 	}
 
-	function handleSubmit(e: Event) {
+	async function handleSubmit(e: Event) {
 		e.preventDefault();
 
 		// Validation logic
@@ -64,17 +65,90 @@
 
 		isProcessing = true;
 
-		// Simulate API call
-		setTimeout(() => {
+		const {
+			data: { session }
+		} = await supabase.auth.getSession();
+		if (!session) {
+			messages = [
+				...messages,
+				{ role: 'assistant', content: 'You must be logged in to generate cards.' }
+			];
+			isProcessing = false;
+			return;
+		}
+
+		// Ensure we have an API key; regenerate if missing
+		let apiKey = localStorage.getItem('masterdebater_api_key');
+		if (!apiKey) {
+			const keyRes = await fetch('/', {
+				method: 'POST',
+				headers: { Authorization: `Bearer ${session.access_token}` }
+			});
+			if (keyRes.ok) {
+				const keyData = await keyRes.json();
+				apiKey = keyData.api_key;
+				if (apiKey) localStorage.setItem('masterdebater_api_key', apiKey);
+			} else {
+				const errData = await keyRes.json().catch(() => ({ error: 'unknown error' }));
+				console.error('[MasterCard] Key fetch failed:', keyRes.status, errData.error);
+			}
+		}
+
+		if (!apiKey) {
+			messages = [
+				...messages,
+				{ role: 'assistant', content: 'Failed to obtain an API key. Please log out and log back in.' }
+			];
+			isProcessing = false;
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append('api_key', apiKey);
+		formData.append('model', model);
+		formData.append('side', side);
+		formData.append('caseArgument', caseArgument);
+		formData.append('cardArgument', cardArgument);
+		formData.append('inputMode', inputMode);
+		if (inputMode === 'text') formData.append('textContent', textContent);
+		if (inputMode === 'link') formData.append('linkContent', linkContent);
+		if (inputMode === 'file' && fileContent) formData.append('fileContent', fileContent);
+
+		try {
+			const res = await fetch('/tools/mastercard', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${session.access_token}`
+				},
+				body: formData
+			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				throw new Error(err.error || 'Failed to generate card');
+			}
+
+			const result = await res.json();
+			const content = result.choices?.[0]?.message?.content || 'No response from AI.';
+
 			messages = [
 				...messages,
 				{
 					role: 'assistant',
-					content: `Here is the structured debate card for your argument:\n\n**Tag:** Economic growth reduces poverty rates\n**Citation:** Smith 2024, Journal of Economics\n**Qualification:** PhD Economics, Harvard\n**Body:** Smith argues that sustained GDP growth above 3% consistently correlates with poverty reduction across developing nations.`
+					content: content
 				}
 			];
+		} catch (e: any) {
+			messages = [
+				...messages,
+				{
+					role: 'assistant',
+					content: `Error: ${e.message}`
+				}
+			];
+		} finally {
 			isProcessing = false;
-		}, 1500);
+		}
 	}
 </script>
 
@@ -170,12 +244,9 @@
 								class="press-feedback w-full appearance-none rounded-lg bg-background px-4 py-2.5 text-sm ring-1 ring-border transition-all hover:bg-cream-200 focus:ring-2 focus:ring-primary/30 focus:outline-none"
 							>
 								<option disabled selected>Choose Model</option>
-								<option value="deepseek-ai/deepseek-v4-pro">DeepSeek V4 Pro</option>
-								<option value="deepseek-ai/deepseek-v4-fast">DeepSeek V4 Fast</option>
-								<option value="google/gemma-4-31b-it">Gemma 4</option>
-								<option value="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
-									>Nemotron 3 Nano Omni</option
-								>
+								<option value="DeepSeek V4 Pro">DeepSeek V4 Pro</option>
+								<option value="DeepSeek V4 Fast">DeepSeek V4 Fast</option>
+								<option value="Llama 3.3 70B">Llama 3.3 70B</option>
 							</select>
 							<ChevronDown
 								size={16}

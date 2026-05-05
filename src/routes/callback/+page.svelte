@@ -43,11 +43,18 @@
 
 			// We call our root API endpoint to set the "logged in" status
 			try {
-				await fetch('/', {
+				const res = await fetch('/', {
 					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
+					headers: { 
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${session.access_token}`
+					},
 					body: JSON.stringify({ status: true })
 				});
+				if (res.ok) {
+					const data = await res.json();
+					if (data.api_key) localStorage.setItem('masterdebater_api_key', data.api_key);
+				}
 				status = 'Welcome! Redirecting...';
 				setTimeout(() => goto('/tools'), 1000);
 			} catch (e) {

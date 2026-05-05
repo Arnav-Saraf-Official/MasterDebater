@@ -1,23 +1,207 @@
 import { json } from '@sveltejs/kit';
+import { readFile } from 'fs/promises';
+import path from 'path';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const pdf = require('pdf-parse');
 
-let loggedIn = false;
+const WORKER_URL = 'https://manager.masterdebaterapp.workers.dev';
 
-function setLoggedIn(value: boolean) {
-	loggedIn = value;
-}
+export const _MODELS: Record<string, { provider: string; model_id: string }> = {
+	'DeepSeek V4 Pro': {
+		provider: 'deepseek',
+		model_id: 'deepseek-v4-pro'
+	},
+	'DeepSeek V4 Fast': {
+		provider: 'deepseek',
+		model_id: 'deepseek-v4-fast'
+	},
+	'Llama 3.3 70B': {
+		provider: 'groq',
+		model_id: 'llama-3.1-8b-instant'
+	}
+};
 
-function getLoggedIn() {
-	return loggedIn;
-}
+export const GET = async ({ request }) => {
+	try {
+		const authHeader = request.headers.get('authorization');
+
+		if (!authHeader) {
+			return json({ loggedIn: false });
+		}
+
+		const accessToken = authHeader.replace('Bearer ', '');
+
+		const userRes = await fetch('https://njvfstduswdwdmyntzow.supabase.co/auth/v1/user', {
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+				apikey: 'sb_publishable_25apIwJcdMrnMkTqOcZEjg_3NWawQuS'
+			}
+		});
+
+		if (!userRes.ok) {
+			return json({ loggedIn: false });
+		}
+
+		const user = await userRes.json();
+
+		return json({
+			loggedIn: true,
+			user: {
+				id: user.id,
+				email: user.email
+			}
+		});
+	} catch (e) {
+		return json({ loggedIn: false });
+	}
+};
 
 export const POST = async ({ request }) => {
-	const { status } = await request.json();
-	setLoggedIn(status);
-	return json({ success: true, loggedIn });
+	try {
+		const authHeader = request.headers.get('authorization');
+
+		if (!authHeader) {
+			return json({ success: false, error: 'no auth' }, { status: 401 });
+		}
+
+		const accessToken = authHeader.replace('Bearer ', '');
+
+		const res = await fetch(`${WORKER_URL}/create-key`, {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${accessToken}`
+			}
+		});
+
+		if (!res.ok) {
+			const errText = await res.text();
+			return json(
+				{ success: false, error: `failed to create api key: ${errText}` },
+				{ status: 500 }
+			);
+		}
+
+		const data = await res.json();
+
+		return json({
+			success: true,
+			api_key: data.api_key
+		});
+	} catch (e: any) {
+		console.error('[/POST] Unhandled error:', e);
+		return json(
+			{ success: false, error: `server error: ${e?.message ?? String(e)}` },
+			{ status: 500 }
+		);
+	}
 };
 
-export const GET = async () => {
-	return json({ loggedIn: getLoggedIn() });
-};
+async function loadSystemPrompt(filePath: string) {
+	try {
+		const absolutePath = path.resolve(filePath);
+		const content = await readFile(absolutePath, 'utf-8');
+		return content;
+	} catch (error) {
+		console.error('Error reading .md file:', error);
+		return error;
+	}
+}
+async function fetchFromUrl(url: string): Promise<string> {
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error(`Failed to fetch from URL: ${response.statusText}`);
+	}
+	return response.text();
+}
 
-export { setLoggedIn, getLoggedIn };
+export async function _generateCardQuery(
+	apiKey: string,
+	modelKey: string,
+	side: string,
+	case_argument: string,
+	offcase_argument: string,
+	card_argument: string,
+	source_type: string,
+	evidence_source: string | File
+) {
+	const modelConfig = _MODELS[modelKey];
+	let evidence: string = '';
+	if (!modelConfig) {
+		throw new Error(`Model ${modelKey} is not supported.`);
+	}
+	switch (source_type) {
+		case 'text':
+			evidence = String(evidence_source);
+			break;
+		case 'link':
+			evidence = await fetchFromUrl(String(evidence_source));
+			break;
+		case 'file': {
+			if (evidence_source instanceof File) {
+				const ext = evidence_source.name.split('.').pop()?.toLowerCase();
+				if (ext === 'pdf') {
+					const dataBuffer = await evidence_source.arrayBuffer();
+					const data = await pdf(Buffer.from(dataBuffer));
+					evidence = data.text;
+				} else {
+					evidence = await evidence_source.text();
+				}
+			} else if (typeof evidence_source === 'string') {
+				const ext = path.extname(evidence_source).toLowerCase();
+				if (ext === '.pdf') {
+					const dataBuffer = await readFile(evidence_source);
+					const data = await pdf(dataBuffer);
+					evidence = data.text;
+				} else {
+					evidence = await readFile(evidence_source, 'utf-8');
+				}
+			}
+			break;
+		}
+	}
+	const payload = {
+		api_key: apiKey,
+		provider: modelConfig.provider,
+		model: modelConfig.model_id,
+		system_prompt: await loadSystemPrompt('static/system/masterCard.md'),
+		prompt: `
+		
+		Side: ${side}
+		Case Argument: ${case_argument}
+		Offcase Argument: ${offcase_argument}
+		Card Argument: ${card_argument}
+		Source Type: ${source_type}
+		Evidence: ${evidence}
+		Please generate an analysis based on the provided evidence.
+		`,
+		idempotency_key: crypto.randomUUID()
+	};
+
+	try {
+		const res = await fetch(`${WORKER_URL}/chat`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(payload)
+		});
+
+		if (!res.ok) {
+			const errText = await res.text();
+			console.error('[generateCardQuery] Worker error:', res.status, errText);
+			throw new Error(`Worker error: ${res.status} ${errText}`);
+		}
+
+		const body = await res.text();
+		console.log('[generateCardQuery] Worker response (first 500):', body.substring(0, 500));
+		try {
+			return JSON.parse(body);
+		} catch {
+			throw new Error(`Invalid JSON from worker: ${body.substring(0, 200)}`);
+		}
+	} catch (e: any) {
+		const cause = e?.cause?.message ?? String(e?.cause ?? '');
+		const msg = `${e.message}${cause ? ` (cause: ${cause})` : ''}`;
+		console.error('[generateCardQuery] fetch threw:', msg, e?.stack);
+		throw new Error(msg);
+	}
+}
