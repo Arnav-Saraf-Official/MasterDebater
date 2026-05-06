@@ -13,6 +13,7 @@
 	let side = $state('affirmative');
 	let model = $state('Choose Model');
 	let caseArgument = $state('');
+	let offcaseArgument = $state('');
 	let cardArgument = $state('');
 
 	let inputMode = $state('text'); // 'text' | 'link' | 'file'
@@ -41,6 +42,9 @@
 
 		// Add user message
 		let userMessage = `[${side === 'affirmative' ? 'Affirmative' : 'Negative'}] Case: ${caseArgument}\n`;
+		if (offcaseArgument) {
+			userMessage += `Offcase: ${offcaseArgument}\n`;
+		}
 		if (cardArgument) {
 			userMessage += `Card: ${cardArgument}\n`;
 		}
@@ -57,6 +61,7 @@
 
 		// Reset inputs
 		caseArgument = '';
+		offcaseArgument = '';
 		cardArgument = '';
 		textContent = '';
 		linkContent = '';
@@ -108,6 +113,7 @@
 		formData.append('model', model);
 		formData.append('side', side);
 		formData.append('caseArgument', caseArgument);
+		formData.append('offcaseArgument', offcaseArgument);
 		formData.append('cardArgument', cardArgument);
 		formData.append('inputMode', inputMode);
 		if (inputMode === 'text') formData.append('textContent', textContent);
@@ -236,7 +242,7 @@
 				class="stagger-3 animate-fade-in-up rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border"
 			>
 				<form onsubmit={handleSubmit} class="flex flex-col space-y-4">
-					<!-- Row 1: Side, Case Arg, Card Arg -->
+					<!-- Row 1: Side, Case Arg -->
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-12">
 						<div class="relative md:col-span-3">
 							<select
@@ -266,7 +272,7 @@
 								class="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground"
 							/>
 						</div>
-						<div class="md:col-span-5">
+						<div class="md:col-span-7">
 							<input
 								type="text"
 								bind:value={caseArgument}
@@ -275,7 +281,19 @@
 								class="press-feedback w-full rounded-lg bg-background px-4 py-2.5 text-sm ring-1 ring-border transition-all placeholder:text-muted-foreground/60 hover:bg-cream-200 focus:ring-2 focus:ring-primary/30 focus:outline-none"
 							/>
 						</div>
-						<div class="md:col-span-4">
+					</div>
+
+					<!-- Row 2: Offcase Arg, Card Arg -->
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-12">
+						<div class="md:col-span-6">
+							<input
+								type="text"
+								bind:value={offcaseArgument}
+								placeholder="Offcase Argument (Optional, short response)"
+								class="press-feedback w-full rounded-lg bg-background px-4 py-2.5 text-sm ring-1 ring-border transition-all placeholder:text-muted-foreground/60 hover:bg-cream-200 focus:ring-2 focus:ring-primary/30 focus:outline-none"
+							/>
+						</div>
+						<div class="md:col-span-6">
 							<input
 								type="text"
 								bind:value={cardArgument}
@@ -388,15 +406,17 @@
 			<div class="flex flex-col gap-2">
 				<p class="text-sm text-muted-foreground">1. Select your side (Affirmative or Negative)</p>
 				<p class="text-sm text-muted-foreground">
-					2. Provide your case argument. If you are Affirmative, this would be oncase. If you are
-					Negative, this would be case or contention/offcase. This is used to help the AI utilize
-					the content in your source to generate a card even if you don't provide a card argument.
+					2. Provide your case argument. This is the main case position this card supports.
 				</p>
-				<p class="text-sm text-muted-foreground">3. Provide your card argument (Optional)</p>
 				<p class="text-sm text-muted-foreground">
-					4. Select one source format (Text, Link, or File)
+					3. Provide an offcase argument (Optional). This is for disadvantages, counterplans, or
+					critiques that this card relates to.
 				</p>
-				<p class="text-sm text-muted-foreground">5. Click "Generate Card" to create your card</p>
+				<p class="text-sm text-muted-foreground">4. Provide your card argument (Optional)</p>
+				<p class="text-sm text-muted-foreground">
+					5. Select one source format (Text, Link, or File)
+				</p>
+				<p class="text-sm text-muted-foreground">6. Click "Generate Card" to create your card</p>
 			</div>
 		</div>
 	</div>

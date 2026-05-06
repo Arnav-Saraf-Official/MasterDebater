@@ -19,6 +19,7 @@ export const POST = async ({ request }) => {
 	const model = formData.get('model') as string;
 	const side = formData.get('side') as string;
 	const caseArgument = formData.get('caseArgument') as string;
+	const offcaseArgument = formData.get('offcaseArgument') as string;
 	const cardArgument = formData.get('cardArgument') as string;
 	const inputMode = formData.get('inputMode') as string;
 
@@ -31,13 +32,22 @@ export const POST = async ({ request }) => {
 		evidenceSource = formData.get('fileContent') as File;
 	}
 
+	console.log('[MasterCard POST] Received request:', {
+		model,
+		side,
+		caseArgument,
+		offcaseArgument,
+		cardArgument,
+		inputMode
+	});
+
 	try {
 		const result = await _generateCardQuery(
 			api_key,
 			model,
 			side,
 			caseArgument,
-			'',
+			offcaseArgument || '',
 			cardArgument || '',
 			inputMode,
 			evidenceSource

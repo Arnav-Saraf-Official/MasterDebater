@@ -97,14 +97,14 @@ export const POST = async ({ request }) => {
 	}
 };
 
-async function loadSystemPrompt(filePath: string) {
+async function loadSystemPrompt(filePath: string): Promise<string> {
 	try {
 		const absolutePath = path.resolve(filePath);
 		const content = await readFile(absolutePath, 'utf-8');
 		return content;
 	} catch (error) {
 		console.error('Error reading .md file:', error);
-		return error;
+		return '';
 	}
 }
 async function fetchFromUrl(url: string): Promise<string> {
@@ -160,7 +160,7 @@ export async function _generateCardQuery(
 			break;
 		}
 	}
-	const payload = {
+	const payload: any = {
 		api_key: apiKey,
 		provider: modelConfig.provider,
 		model: modelConfig.model_id,
@@ -168,16 +168,19 @@ export async function _generateCardQuery(
 		prompt: `
 		
 		Side: ${side}
-		Case Argument: ${case_argument}
-		Offcase Argument: ${offcase_argument}
+		Topic: ${case_argument}
+		Argument: ${offcase_argument}
 		Card Argument: ${card_argument}
-		Source Type: ${source_type}
 		Evidence: ${evidence}
-		Please generate an analysis based on the provided evidence.
 		`,
 		idempotency_key: crypto.randomUUID()
 	};
-
+	console.log('[generateCardQuery] Sending payload to worker:', {
+		provider: payload.provider,
+		model: payload.model,
+		prompt: payload.prompt,
+		system_prompt_length: payload.system_prompt.length
+	});
 	try {
 		const res = await fetch(`${WORKER_URL}/chat`, {
 			method: 'POST',
