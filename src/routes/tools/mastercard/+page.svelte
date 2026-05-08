@@ -1,14 +1,22 @@
 <script lang="ts">
-	import { Send, UploadCloud, Link as LinkIcon, Type, FileText, ChevronDown } from '@lucide/svelte';
+	import {
+		Send,
+		UploadCloud,
+		Link as LinkIcon,
+		Type,
+		FileText,
+		ChevronDown,
+		Copy,
+		Check,
+		Trash2
+	} from '@lucide/svelte';
 	import { supabase } from '$lib/supabase';
 
-	let messages = $state([
-		{
-			role: 'assistant',
-			content:
-				'Welcome to MasterCard! Provide your case argument and source material (text, link, or file) and I will cut a structured debate card for you.'
-		}
-	]);
+	const WELCOME =
+		'Welcome to MasterCard! Provide your case argument and source material (text, link, or file) and I will cut a structured debate card for you.';
+
+	let messages = $state([{ role: 'assistant', content: WELCOME }]);
+	let copiedIndex = $state<number | null>(null);
 
 	let side = $state('affirmative');
 	let model = $state('Choose Model');
@@ -23,6 +31,38 @@
 
 	let isProcessing = $state(false);
 	let fileInputEl = $state<HTMLInputElement>();
+
+	let wordCount = $derived(textContent.trim() ? textContent.trim().split(/\s+/).length : 0);
+	let charCount = $derived(textContent.length);
+
+	function clearChat() {
+		messages = [{ role: 'assistant', content: WELCOME }];
+	}
+
+	async function copyMessage(content: string, index: number) {
+		await navigator.clipboard.writeText(content);
+		copiedIndex = index;
+		setTimeout(() => (copiedIndex = null), 1500);
+	}
+
+	// progressively reveal idk if ts will work with the worker
+	function streamIntoLast(fullText: string) {
+		let i = 0;
+		const tick = () => {
+			if (i >= fullText.length) return;
+			i = Math.min(i + 8, fullText.length);
+			messages[messages.length - 1] = { role: 'assistant', content: fullText.slice(0, i) };
+			requestAnimationFrame(tick);
+		};
+		requestAnimationFrame(tick);
+	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+			e.preventDefault();
+			handleSubmit(new Event('submit'));
+		}
+	}
 
 	const DEV_TEST_CASES = [
 		{
@@ -57,7 +97,7 @@
 		cardArgument = tc.cardArgument;
 		inputMode = tc.inputMode;
 		textContent = tc.textContent;
-		// Trigger submit on next tick so reactive state propagates
+
 		await Promise.resolve();
 		handleSubmit(new Event('submit'));
 	}
@@ -72,32 +112,28 @@
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 
-		// Validation logic
 		if (!caseArgument) return;
 		if (inputMode === 'text' && !textContent) return;
 		if (inputMode === 'link' && !linkContent) return;
 		if (inputMode === 'file' && !fileContent) return;
 
-		// Add user message
 		let userMessage = `[${side === 'affirmative' ? 'Affirmative' : 'Negative'}] Case: ${caseArgument}\n`;
-		if (offcaseArgument) {
-			userMessage += `Offcase: ${offcaseArgument}\n`;
-		}
-		if (cardArgument) {
-			userMessage += `Card: ${cardArgument}\n`;
-		}
-
-		if (inputMode === 'text') {
-			userMessage += `Source (Text): ${textContent.substring(0, 150)}...`;
-		} else if (inputMode === 'link') {
-			userMessage += `Source (Link): ${linkContent}`;
-		} else if (inputMode === 'file' && fileContent) {
-			userMessage += `Source (File): ${fileContent.name}`;
-		}
+		if (offcaseArgument) userMessage += `Offcase: ${offcaseArgument}\n`;
+		if (cardArgument) userMessage += `Card: ${cardArgument}\n`;
+		if (inputMode === 'text') userMessage += `Source (Text): ${textContent.substring(0, 150)}...`;
+		else if (inputMode === 'link') userMessage += `Source (Link): ${linkContent}`;
+		else if (inputMode === 'file' && fileContent) userMessage += `Source (File): ${fileContent.name}`;
 
 		messages = [...messages, { role: 'user', content: userMessage }];
 
-		// Reset inputs
+		// snapshot values before reset
+		const submitCaseArg = caseArgument;
+		const submitOffcaseArg = offcaseArgument;
+		const submitCardArg = cardArgument;
+		const submitTextContent = textContent;
+		const submitLinkContent = linkContent;
+		const submitFileContent = fileContent;
+
 		caseArgument = '';
 		offcaseArgument = '';
 		cardArgument = '';
@@ -112,15 +148,11 @@
 			data: { session }
 		} = await supabase.auth.getSession();
 		if (!session) {
-			messages = [
-				...messages,
-				{ role: 'assistant', content: 'You must be logged in to generate cards.' }
-			];
+			messages = [...messages, { role: 'assistant', content: 'You must be logged in to generate cards.' }];
 			isProcessing = false;
 			return;
 		}
 
-		// Ensure we have an API key; regenerate if missing
 		let apiKey = localStorage.getItem('masterdebater_api_key');
 		if (!apiKey) {
 			const keyRes = await fetch('/', {
@@ -138,13 +170,7 @@
 		}
 
 		if (!apiKey) {
-			messages = [
-				...messages,
-				{
-					role: 'assistant',
-					content: 'Failed to obtain an API key. Please log out and log back in.'
-				}
-			];
+			messages = [...messages, { role: 'assistant', content: 'Failed to obtain an API key. Please log out and log back in.' }];
 			isProcessing = false;
 			return;
 		}
@@ -153,20 +179,18 @@
 		formData.append('api_key', apiKey);
 		formData.append('model', model);
 		formData.append('side', side);
-		formData.append('caseArgument', caseArgument);
-		formData.append('offcaseArgument', offcaseArgument);
-		formData.append('cardArgument', cardArgument);
+		formData.append('caseArgument', submitCaseArg);
+		formData.append('offcaseArgument', submitOffcaseArg);
+		formData.append('cardArgument', submitCardArg);
 		formData.append('inputMode', inputMode);
-		if (inputMode === 'text') formData.append('textContent', textContent);
-		if (inputMode === 'link') formData.append('linkContent', linkContent);
-		if (inputMode === 'file' && fileContent) formData.append('fileContent', fileContent);
+		if (inputMode === 'text') formData.append('textContent', submitTextContent);
+		if (inputMode === 'link') formData.append('linkContent', submitLinkContent);
+		if (inputMode === 'file' && submitFileContent) formData.append('fileContent', submitFileContent);
 
 		try {
 			const res = await fetch('/tools/mastercard', {
 				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${session.access_token}`
-				},
+				headers: { Authorization: `Bearer ${session.access_token}` },
 				body: formData
 			});
 
@@ -178,21 +202,13 @@
 			const result = await res.json();
 			const content = result.choices?.[0]?.message?.content || 'No response from AI.';
 
-			messages = [
-				...messages,
-				{
-					role: 'assistant',
-					content: content
-				}
-			];
+			// seed empty message then stream characters in
+			messages = [...messages, { role: 'assistant', content: '' }];
+			isProcessing = false;
+			streamIntoLast(content);
+			return;
 		} catch (e: any) {
-			messages = [
-				...messages,
-				{
-					role: 'assistant',
-					content: `Error: ${e.message}`
-				}
-			];
+			messages = [...messages, { role: 'assistant', content: `Error: ${e.message}` }];
 		} finally {
 			isProcessing = false;
 		}
@@ -224,7 +240,18 @@
 			<div
 				class="stagger-2 mb-6 flex min-h-[400px] flex-1 animate-fade-in-up flex-col space-y-4 overflow-y-auto rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border"
 			>
-				{#each messages as message}
+				<!-- clear chat button -->
+				<div class="flex justify-end">
+					<button
+						type="button"
+						onclick={clearChat}
+						class="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:bg-background hover:text-foreground"
+					>
+						<Trash2 size={13} /> Clear chat
+					</button>
+				</div>
+
+				{#each messages as message, i}
 					<div class="flex w-full {message.role === 'user' ? 'justify-end' : 'justify-start'}">
 						<div
 							class="max-w-[85%] rounded-2xl p-4 shadow-sm {message.role === 'user'
@@ -232,11 +259,26 @@
 								: 'rounded-tl-sm bg-background text-foreground ring-1 ring-border'}"
 						>
 							{#if message.role === 'assistant'}
-								<div class="mb-2 flex items-center gap-2">
-									<FileText size={14} class="text-primary" />
-									<span class="text-xs font-semibold tracking-wider text-primary uppercase"
-										>MasterCard</span
+								<div class="mb-2 flex items-center justify-between gap-2">
+									<div class="flex items-center gap-2">
+										<FileText size={14} class="text-primary" />
+										<span class="text-xs font-semibold tracking-wider text-primary uppercase"
+											>MasterCard</span
+										>
+									</div>
+									<!-- copy button -->
+									<button
+										type="button"
+										onclick={() => copyMessage(message.content, i)}
+										class="ml-2 rounded p-1 text-muted-foreground transition-all hover:bg-card hover:text-foreground"
+										title="Copy to clipboard"
 									>
+										{#if copiedIndex === i}
+											<Check size={13} class="text-primary" />
+										{:else}
+											<Copy size={13} />
+										{/if}
+									</button>
 								</div>
 							{/if}
 							<div
@@ -283,7 +325,7 @@
 				class="stagger-3 animate-fade-in-up rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border"
 			>
 				<form onsubmit={handleSubmit} class="flex flex-col space-y-4">
-					<!-- Row 1: Side, Case Arg -->
+					<!-- Row 1: Model, Side, Case Arg -->
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-12">
 						<div class="relative md:col-span-3">
 							<select
@@ -344,7 +386,7 @@
 						</div>
 					</div>
 
-					<!-- Row 2: Source Input Tabs -->
+					<!-- Row 3: Source Input Tabs -->
 					<div class="flex flex-col space-y-2 rounded-lg bg-background p-4 ring-1 ring-border">
 						<div class="flex space-x-2 border-b border-border pb-3">
 							<button
@@ -380,11 +422,18 @@
 							{#if inputMode === 'text'}
 								<textarea
 									bind:value={textContent}
+									onkeydown={handleKeydown}
 									required
 									rows="4"
 									placeholder="Paste your long response source text here..."
 									class="w-full resize-y rounded-lg bg-card px-4 py-3 text-sm ring-1 ring-border placeholder:text-muted-foreground/60 focus:ring-2 focus:ring-primary/30 focus:outline-none"
 								></textarea>
+								<!-- char/word count -->
+								{#if charCount > 0}
+									<p class="mt-1 text-right text-xs text-muted-foreground/60">
+										{wordCount} words · {charCount} chars
+									</p>
+								{/if}
 							{:else if inputMode === 'link'}
 								<input
 									type="url"
@@ -422,19 +471,23 @@
 						</div>
 					</div>
 
-					<!-- Submit Button -->
+					<!-- Submit Row -->
 					<div class="flex items-center justify-between pt-2">
 						<span class="text-xs text-muted-foreground"
 							>Select one source format above. Only the active tab will be submitted.</span
 						>
-						<button
-							type="submit"
-							disabled={isProcessing}
-							class="press-feedback flex items-center gap-2 rounded-lg bg-primary px-8 py-3 text-sm font-semibold text-on-primary shadow-md transition-all hover:bg-amber-warm-light hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
-						>
-							<Send size={16} />
-							{isProcessing ? 'Processing...' : 'Generate Card'}
-						</button>
+						<div class="flex flex-col items-end gap-1">
+							<button
+								type="submit"
+								disabled={isProcessing}
+								class="press-feedback flex items-center gap-2 rounded-lg bg-primary px-8 py-3 text-sm font-semibold text-on-primary shadow-md transition-all hover:bg-amber-warm-light hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								<Send size={16} />
+								{isProcessing ? 'Processing...' : 'Generate Card'}
+							</button>
+							<!-- cmd+enter hint -->
+							<span class="text-[11px] text-muted-foreground/50">⌘↵ to submit</span>
+						</div>
 					</div>
 				</form>
 			</div>
