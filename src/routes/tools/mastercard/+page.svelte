@@ -8,19 +8,25 @@
 		ChevronDown,
 		Copy,
 		Check,
-		Trash2
+		Trash2,
+		RefreshCw
 	} from '@lucide/svelte';
 	import { supabase } from '$lib/supabase';
 
 	const WELCOME =
 		'Welcome to MasterCard! Provide your case argument and source material (text, link, or file) and I will cut a structured debate card for you.';
 
-	let messages = $state([{ role: 'assistant', content: WELCOME }]);
+	let messages = $state<{ role: string; content: string; canRetry?: boolean }[]>([{ role: 'assistant', content: WELCOME }]);
 	let copiedIndex = $state<number | null>(null);
 
-	let side = $state('affirmative');
-	let model = $state('Choose Model');
-	let caseArgument = $state('');
+	// init from ls
+	let side = $state(typeof localStorage !== 'undefined' ? (localStorage.getItem('mc_side') ?? 'affirmative') : 'affirmative');
+	let model = $state(typeof localStorage !== 'undefined' ? (localStorage.getItem('mc_model') ?? 'Choose Model') : 'Choose Model');
+	let caseArgument = $state(typeof localStorage !== 'undefined' ? (localStorage.getItem('mc_caseArg') ?? '') : '');
+
+	$effect(() => { localStorage.setItem('mc_side', side); });
+	$effect(() => { localStorage.setItem('mc_model', model); });
+	$effect(() => { localStorage.setItem('mc_caseArg', caseArgument); });
 	let offcaseArgument = $state('');
 	let cardArgument = $state('');
 
@@ -31,6 +37,13 @@
 
 	let isProcessing = $state(false);
 	let fileInputEl = $state<HTMLInputElement>();
+
+	type SubmitPayload = {
+		caseArg: string; offcaseArg: string; cardArg: string;
+		textContent: string; linkContent: string; fileContent: File | null;
+		inputMode: string; side: string; model: string;
+	};
+	let lastSubmit = $state<SubmitPayload | null>(null);
 
 	let wordCount = $derived(textContent.trim() ? textContent.trim().split(/\s+/).length : 0);
 	let charCount = $derived(textContent.length);
@@ -109,6 +122,59 @@
 		}
 	}
 
+	async function retrySubmit() {
+		if (!lastSubmit) return;
+		// rm the error message
+		messages = messages.slice(0, -1);
+		isProcessing = true;
+
+		const { data: { session } } = await supabase.auth.getSession();
+		if (!session) {
+			messages = [...messages, { role: 'assistant', content: 'You must be logged in.' }];
+			isProcessing = false;
+			return;
+		}
+
+		let apiKey = localStorage.getItem('masterdebater_api_key');
+		if (!apiKey) {
+			const keyRes = await fetch('/', { method: 'POST', headers: { Authorization: `Bearer ${session.access_token}` } });
+			if (keyRes.ok) { const d = await keyRes.json(); apiKey = d.api_key; if (apiKey) localStorage.setItem('masterdebater_api_key', apiKey); }
+		}
+		if (!apiKey) {
+			messages = [...messages, { role: 'assistant', content: 'Failed to obtain API key.', canRetry: true }];
+			isProcessing = false;
+			return;
+		}
+
+		const p = lastSubmit;
+		const formData = new FormData();
+		formData.append('api_key', apiKey);
+		formData.append('model', p.model);
+		formData.append('side', p.side);
+		formData.append('caseArgument', p.caseArg);
+		formData.append('offcaseArgument', p.offcaseArg);
+		formData.append('cardArgument', p.cardArg);
+		formData.append('inputMode', p.inputMode);
+		if (p.inputMode === 'text') formData.append('textContent', p.textContent);
+		if (p.inputMode === 'link') formData.append('linkContent', p.linkContent);
+		if (p.inputMode === 'file' && p.fileContent) formData.append('fileContent', p.fileContent);
+
+		try {
+			const res = await fetch('/tools/mastercard', { method: 'POST', headers: { Authorization: `Bearer ${session.access_token}` }, body: formData });
+			if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Failed to generate card'); }
+			const result = await res.json();
+			const content = result.choices?.[0]?.message?.content || 'No response from AI.';
+			messages = [...messages, { role: 'assistant', content: '' }];
+			isProcessing = false;
+			streamIntoLast(content);
+			return;
+		} catch (e: any) {
+			messages = [...messages, { role: 'assistant', content: `Error: ${e.message}`, canRetry: true }];
+		} finally {
+			isProcessing = false;
+		}
+	}
+
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 
@@ -133,6 +199,10 @@
 		const submitTextContent = textContent;
 		const submitLinkContent = linkContent;
 		const submitFileContent = fileContent;
+
+		lastSubmit = { caseArg: submitCaseArg, offcaseArg: submitOffcaseArg, cardArg: submitCardArg,
+			textContent: submitTextContent, linkContent: submitLinkContent, fileContent: submitFileContent,
+			inputMode, side, model };
 
 		caseArgument = '';
 		offcaseArgument = '';
@@ -208,7 +278,7 @@
 			streamIntoLast(content);
 			return;
 		} catch (e: any) {
-			messages = [...messages, { role: 'assistant', content: `Error: ${e.message}` }];
+			messages = [...messages, { role: 'assistant', content: `Error: ${e.message}`, canRetry: true }];
 		} finally {
 			isProcessing = false;
 		}
@@ -291,6 +361,16 @@
 									.replace(/\*\*(\S)/g, '** $1')
 									.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')}
 							</div>
+							{#if message.canRetry}
+								<button
+									type="button"
+									onclick={retrySubmit}
+									disabled={isProcessing}
+									class="mt-2 flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-primary ring-1 ring-primary/30 transition-all hover:bg-primary/10 disabled:opacity-50"
+								>
+									<RefreshCw size={12} /> Try again
+								</button>
+							{/if}
 						</div>
 					</div>
 				{/each}
@@ -305,16 +385,10 @@
 									>MasterCard AI</span
 								>
 							</div>
-							<div class="mt-2 flex gap-1.5">
-								<div class="h-2 w-2 animate-bounce rounded-full bg-primary/50"></div>
-								<div
-									class="h-2 w-2 animate-bounce rounded-full bg-primary/50"
-									style="animation-delay: 0.15s"
-								></div>
-								<div
-									class="h-2 w-2 animate-bounce rounded-full bg-primary/50"
-									style="animation-delay: 0.3s"
-								></div>
+							<div class="mt-2 flex flex-col gap-2">
+								<div class="skeleton h-3 w-full rounded"></div>
+								<div class="skeleton h-3 w-4/5 rounded"></div>
+								<div class="skeleton h-3 w-3/5 rounded"></div>
 							</div>
 						</div>
 					</div>
@@ -515,6 +589,22 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	@keyframes shimmer {
+		0% { background-position: -400% 0; }
+		100% { background-position: 400% 0; }
+	}
+	.skeleton {
+		background: linear-gradient(90deg, oklch(0.92 0 0 / 0.4) 25%, oklch(0.85 0 0 / 0.6) 50%, oklch(0.92 0 0 / 0.4) 75%);
+		background-size: 400% 100%;
+		animation: shimmer 1.6s ease-in-out infinite;
+	}
+	:global(.dark) .skeleton {
+		background: linear-gradient(90deg, oklch(0.3 0 0 / 0.4) 25%, oklch(0.4 0 0 / 0.6) 50%, oklch(0.3 0 0 / 0.4) 75%);
+		background-size: 400% 100%;
+	}
+</style>
 
 {#if import.meta.env.DEV}
 	<div class="fixed right-4 bottom-4 z-50 flex flex-col items-end gap-2">
