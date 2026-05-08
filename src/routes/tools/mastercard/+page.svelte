@@ -286,10 +286,10 @@
 									? 'text-on-primary/90'
 									: 'text-foreground'}"
 							>
-								{@html message.content.replace(
-									/\*\*(.*?)\*\*/g,
-									'<strong class="font-semibold">$1</strong>'
-								)}
+								{@html message.content
+									.replace(/(\S)\*\*/g, '$1 **')
+									.replace(/\*\*(\S)/g, '** $1')
+									.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')}
 							</div>
 						</div>
 					</div>
