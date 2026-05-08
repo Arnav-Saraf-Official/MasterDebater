@@ -24,6 +24,44 @@
 	let isProcessing = $state(false);
 	let fileInputEl = $state<HTMLInputElement>();
 
+	const DEV_TEST_CASES = [
+		{
+			label: 'UBI text',
+			side: 'affirmative',
+			model: 'Llama 3.3 70B',
+			caseArgument: 'Universal Basic Income',
+			offcaseArgument: 'Welfare Reform Disad',
+			cardArgument: 'UBI reduces poverty',
+			inputMode: 'text',
+			textContent:
+				'A 2023 Stanford study found unconditional cash transfers of $500/month reduced poverty rates by 40% among recipients over 18 months, with participants more likely to seek employment and education compared to control groups receiving traditional welfare benefits.'
+		},
+		{
+			label: 'Climate neg text',
+			side: 'negative',
+			model: 'DeepSeek V4 Pro',
+			caseArgument: 'Green New Deal',
+			offcaseArgument: '',
+			cardArgument: 'economic costs outweigh',
+			inputMode: 'text',
+			textContent:
+				'The Congressional Budget Office estimates the Green New Deal would cost between $51 and $93 trillion over ten years, representing more than double current federal spending, with uncertain emissions reductions that could be achieved at far lower cost through carbon pricing mechanisms.'
+		}
+	];
+
+	async function runDevTest(tc: (typeof DEV_TEST_CASES)[0]) {
+		side = tc.side;
+		model = tc.model;
+		caseArgument = tc.caseArgument;
+		offcaseArgument = tc.offcaseArgument;
+		cardArgument = tc.cardArgument;
+		inputMode = tc.inputMode;
+		textContent = tc.textContent;
+		// Trigger submit on next tick so reactive state propagates
+		await Promise.resolve();
+		handleSubmit(new Event('submit'));
+	}
+
 	function handleFileChange(event: Event) {
 		const target = event.target as HTMLInputElement;
 		if (target.files && target.files.length > 0) {
@@ -102,7 +140,10 @@
 		if (!apiKey) {
 			messages = [
 				...messages,
-				{ role: 'assistant', content: 'Failed to obtain an API key. Please log out and log back in.' }
+				{
+					role: 'assistant',
+					content: 'Failed to obtain an API key. Please log out and log back in.'
+				}
 			];
 			isProcessing = false;
 			return;
@@ -421,3 +462,17 @@
 		</div>
 	</div>
 </div>
+
+{#if import.meta.env.DEV}
+	<div class="fixed right-4 bottom-4 z-50 flex flex-col items-end gap-2">
+		{#each DEV_TEST_CASES as tc}
+			<button
+				onclick={() => runDevTest(tc)}
+				disabled={isProcessing}
+				class="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-bold text-black shadow-lg hover:bg-yellow-300 disabled:opacity-50"
+			>
+				⚡ {tc.label}
+			</button>
+		{/each}
+	</div>
+{/if}

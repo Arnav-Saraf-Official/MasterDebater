@@ -18,7 +18,7 @@ export const _MODELS: Record<string, { provider: string; model_id: string }> = {
 	},
 	'Llama 3.3 70B': {
 		provider: 'groq',
-		model_id: 'llama-3.1-8b-instant'
+		model_id: 'llama-3.3-70b-versatile'
 	}
 };
 
