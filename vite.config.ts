@@ -5,7 +5,10 @@ import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
+	optimizeDeps: { include: ['@supabase/supabase-js', 'lucide-svelte'] },
 	build: {
+		target: 'chrome120',
+		minify: 'esbuild',
 		rollupOptions: {
 			output: {
 				manualChunks(id) {

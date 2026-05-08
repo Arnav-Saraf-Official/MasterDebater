@@ -80,12 +80,14 @@ async function createWindow(): Promise<void> {
 		minHeight: 600,
 		title: 'MasterDebater',
 		backgroundColor: '#FFFBEB',
+		show: false,
 		webPreferences: {
 			preload: path.join(__dirname, 'preload.js'),
 			nodeIntegration: false,
 			contextIsolation: true
 		}
 	});
+	mainWindow.once('ready-to-show', () => mainWindow!.show());
 
 	if (isDev) {
 		console.log('[MasterDebater] Loading dev URL: http://localhost:5188');

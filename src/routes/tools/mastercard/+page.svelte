@@ -13,6 +13,7 @@
 		Download
 	} from '@lucide/svelte';
 	import { supabase } from '$lib/supabase';
+	import { browser } from '$app/environment';
 
 	const WELCOME =
 		'Welcome to MasterCard! Provide your case argument and source material (text, link, or file) and I will cut a structured debate card for you.';
@@ -24,9 +25,9 @@
 	let chatEl = $state<HTMLElement>();
 
 	// init from ls
-	let side = $state(typeof localStorage !== 'undefined' ? (localStorage.getItem('mc_side') ?? 'affirmative') : 'affirmative');
-	let model = $state(typeof localStorage !== 'undefined' ? (localStorage.getItem('mc_model') ?? 'Choose Model') : 'Choose Model');
-	let caseArgument = $state(typeof localStorage !== 'undefined' ? (localStorage.getItem('mc_caseArg') ?? '') : '');
+	let side = $state(browser ? (localStorage.getItem('mc_side') ?? 'affirmative') : 'affirmative');
+	let model = $state(browser ? (localStorage.getItem('mc_model') ?? 'Choose Model') : 'Choose Model');
+	let caseArgument = $state(browser ? (localStorage.getItem('mc_caseArg') ?? '') : '');
 
 	$effect(() => { localStorage.setItem('mc_side', side); });
 	$effect(() => { localStorage.setItem('mc_model', model); });

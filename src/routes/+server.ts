@@ -138,7 +138,7 @@ export async function _generateCardQuery(
 			if (evidence_source instanceof File) {
 				const ext = evidence_source.name.split('.').pop()?.toLowerCase();
 				if (ext === 'pdf') {
-					const { default: pdf } = await import('pdf-parse');
+					const pdf = (await import('pdf-parse')) as any;
 					const dataBuffer = await evidence_source.arrayBuffer();
 					const data = await pdf(Buffer.from(dataBuffer));
 					evidence = data.text;
@@ -148,7 +148,7 @@ export async function _generateCardQuery(
 			} else if (typeof evidence_source === 'string') {
 				const ext = path.extname(evidence_source).toLowerCase();
 				if (ext === '.pdf') {
-					const { default: pdf } = await import('pdf-parse');
+					const pdf = (await import('pdf-parse')) as any;
 					const dataBuffer = await readFile(evidence_source);
 					const data = await pdf(dataBuffer);
 					evidence = data.text;
