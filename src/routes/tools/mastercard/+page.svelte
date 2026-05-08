@@ -9,15 +9,19 @@
 		Copy,
 		Check,
 		Trash2,
-		RefreshCw
+		RefreshCw,
+		Download
 	} from '@lucide/svelte';
 	import { supabase } from '$lib/supabase';
 
 	const WELCOME =
 		'Welcome to MasterCard! Provide your case argument and source material (text, link, or file) and I will cut a structured debate card for you.';
 
-	let messages = $state<{ role: string; content: string; canRetry?: boolean }[]>([{ role: 'assistant', content: WELCOME }]);
+	let messages = $state<{ role: string; content: string; canRetry?: boolean; timestamp?: number; modelName?: string }[]>([{ role: 'assistant', content: WELCOME }]);
 	let copiedIndex = $state<number | null>(null);
+	let showToast = $state(false);
+	let toastTimer: ReturnType<typeof setTimeout>;
+	let chatEl = $state<HTMLElement>();
 
 	// init from ls
 	let side = $state(typeof localStorage !== 'undefined' ? (localStorage.getItem('mc_side') ?? 'affirmative') : 'affirmative');
@@ -27,6 +31,10 @@
 	$effect(() => { localStorage.setItem('mc_side', side); });
 	$effect(() => { localStorage.setItem('mc_model', model); });
 	$effect(() => { localStorage.setItem('mc_caseArg', caseArgument); });
+	$effect(() => {
+		void (messages.length + (isProcessing ? 1 : 0));
+		chatEl?.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' });
+	});
 	let offcaseArgument = $state('');
 	let cardArgument = $state('');
 
@@ -56,15 +64,37 @@
 		await navigator.clipboard.writeText(content);
 		copiedIndex = index;
 		setTimeout(() => (copiedIndex = null), 1500);
+		// toast feedback
+		clearTimeout(toastTimer);
+		showToast = true;
+		toastTimer = setTimeout(() => (showToast = false), 2000);
+	}
+
+	function downloadCard(content: string) {
+		const blob = new Blob([content], { type: 'text/plain' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `mastercard-${Date.now()}.txt`;
+		a.click();
+		URL.revokeObjectURL(url);
+	}
+
+	function relativeTime(ts: number): string {
+		const diff = Math.floor((Date.now() - ts) / 1000);
+		if (diff < 60) return 'just now';
+		if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+		return `${Math.floor(diff / 3600)}h ago`;
 	}
 
 	// progressively reveal idk if ts will work with the worker
 	function streamIntoLast(fullText: string) {
 		let i = 0;
+		const base = { ...messages[messages.length - 1] };
 		const tick = () => {
 			if (i >= fullText.length) return;
 			i = Math.min(i + 8, fullText.length);
-			messages[messages.length - 1] = { role: 'assistant', content: fullText.slice(0, i) };
+			messages[messages.length - 1] = { ...base, content: fullText.slice(0, i) };
 			requestAnimationFrame(tick);
 		};
 		requestAnimationFrame(tick);
@@ -164,7 +194,7 @@
 			if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Failed to generate card'); }
 			const result = await res.json();
 			const content = result.choices?.[0]?.message?.content || 'No response from AI.';
-			messages = [...messages, { role: 'assistant', content: '' }];
+			messages = [...messages, { role: 'assistant', content: '', timestamp: Date.now(), modelName: p.model }];
 			isProcessing = false;
 			streamIntoLast(content);
 			return;
@@ -190,7 +220,7 @@
 		else if (inputMode === 'link') userMessage += `Source (Link): ${linkContent}`;
 		else if (inputMode === 'file' && fileContent) userMessage += `Source (File): ${fileContent.name}`;
 
-		messages = [...messages, { role: 'user', content: userMessage }];
+		messages = [...messages, { role: 'user', content: userMessage, timestamp: Date.now() }];
 
 		// snapshot values before reset
 		const submitCaseArg = caseArgument;
@@ -273,7 +303,7 @@
 			const content = result.choices?.[0]?.message?.content || 'No response from AI.';
 
 			// seed empty message then stream characters in
-			messages = [...messages, { role: 'assistant', content: '' }];
+			messages = [...messages, { role: 'assistant', content: '', timestamp: Date.now(), modelName: model }];
 			isProcessing = false;
 			streamIntoLast(content);
 			return;
@@ -308,6 +338,7 @@
 	<div class="flex gap-4">
 		<span class="w-[100%]">
 			<div
+				bind:this={chatEl}
 				class="stagger-2 mb-6 flex min-h-[400px] flex-1 animate-fade-in-up flex-col space-y-4 overflow-y-auto rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border"
 			>
 				<!-- clear chat button -->
@@ -324,7 +355,7 @@
 				{#each messages as message, i}
 					<div class="flex w-full {message.role === 'user' ? 'justify-end' : 'justify-start'}">
 						<div
-							class="max-w-[85%] rounded-2xl p-4 shadow-sm {message.role === 'user'
+							class="group max-w-[85%] rounded-2xl p-4 shadow-sm {message.role === 'user'
 								? 'rounded-tr-sm bg-primary text-on-primary'
 								: 'rounded-tl-sm bg-background text-foreground ring-1 ring-border'}"
 						>
@@ -336,19 +367,31 @@
 											>MasterCard</span
 										>
 									</div>
-									<!-- copy button -->
-									<button
-										type="button"
-										onclick={() => copyMessage(message.content, i)}
-										class="ml-2 rounded p-1 text-muted-foreground transition-all hover:bg-card hover:text-foreground"
-										title="Copy to clipboard"
-									>
-										{#if copiedIndex === i}
-											<Check size={13} class="text-primary" />
-										{:else}
-											<Copy size={13} />
+									<!-- copy + download buttons -->
+									<div class="ml-2 flex items-center gap-1">
+										<button
+											type="button"
+											onclick={() => copyMessage(message.content, i)}
+											class="rounded p-1 text-muted-foreground transition-all hover:bg-card hover:text-foreground"
+											title="Copy to clipboard"
+										>
+											{#if copiedIndex === i}
+												<Check size={13} class="text-primary" />
+											{:else}
+												<Copy size={13} />
+											{/if}
+										</button>
+										{#if message.content && message.content !== WELCOME && !message.canRetry}
+											<button
+												type="button"
+												onclick={() => downloadCard(message.content)}
+												class="rounded p-1 text-muted-foreground transition-all hover:bg-card hover:text-foreground"
+												title="Download as .txt"
+											>
+												<Download size={13} />
+											</button>
 										{/if}
-									</button>
+									</div>
 								</div>
 							{/if}
 							<div
@@ -370,6 +413,12 @@
 								>
 									<RefreshCw size={12} /> Try again
 								</button>
+							{/if}
+							{#if message.modelName || message.timestamp}
+								<div class="mt-2 flex items-center justify-between opacity-0 transition-opacity group-hover:opacity-100">
+									<span class="text-[10px] text-muted-foreground/50">{message.modelName ?? ''}</span>
+									<span class="text-[10px] text-muted-foreground/40">{message.timestamp ? relativeTime(message.timestamp) : ''}</span>
+								</div>
 							{/if}
 						</div>
 					</div>
@@ -604,7 +653,22 @@
 		background: linear-gradient(90deg, oklch(0.3 0 0 / 0.4) 25%, oklch(0.4 0 0 / 0.6) 50%, oklch(0.3 0 0 / 0.4) 75%);
 		background-size: 400% 100%;
 	}
+	@keyframes toast-in-out {
+		0% { opacity: 0; transform: translateX(-50%) translateY(8px); }
+		15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+		75% { opacity: 1; transform: translateX(-50%) translateY(0); }
+		100% { opacity: 0; transform: translateX(-50%) translateY(8px); }
+	}
+	.toast {
+		animation: toast-in-out 2s ease forwards;
+	}
 </style>
+
+{#if showToast}
+	<div class="toast fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background shadow-lg">
+		Copied!
+	</div>
+{/if}
 
 {#if import.meta.env.DEV}
 	<div class="fixed right-4 bottom-4 z-50 flex flex-col items-end gap-2">
