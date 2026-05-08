@@ -21,6 +21,7 @@ export const POST = async ({ request }) => {
 	const caseArgument = formData.get('caseArgument') as string;
 	const offcaseArgument = formData.get('offcaseArgument') as string;
 	const cardArgument = formData.get('cardArgument') as string;
+	const citation = (formData.get('citation') as string) || '';
 	const inputMode = formData.get('inputMode') as string;
 
 	let evidenceSource: string | File = '';
@@ -50,7 +51,8 @@ export const POST = async ({ request }) => {
 			offcaseArgument || '',
 			cardArgument || '',
 			inputMode,
-			evidenceSource
+			evidenceSource,
+			citation
 		);
 		return json(result);
 	} catch (e: any) {

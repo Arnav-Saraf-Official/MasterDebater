@@ -120,7 +120,8 @@ export async function _generateCardQuery(
 	offcase_argument: string,
 	card_argument: string,
 	source_type: string,
-	evidence_source: string | File
+	evidence_source: string | File,
+	citation: string = ''
 ) {
 	const modelConfig = _MODELS[modelKey];
 	let evidence: string = '';
@@ -170,6 +171,7 @@ export async function _generateCardQuery(
 		Topic: ${case_argument}
 		Argument: ${offcase_argument}
 		Card Argument: ${card_argument}
+		Citation: ${citation}
 		Evidence: ${evidence}
 		`,
 		idempotency_key: crypto.randomUUID()

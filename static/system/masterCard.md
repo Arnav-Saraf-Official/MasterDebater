@@ -18,16 +18,18 @@ If a word is not in the Evidence, it does not exist for this task. Treat the Evi
 A debate card is a short snippet cut directly from a source to support a debate argument. The card:
 - Contains **only** the exact words of the source (the Evidence input)
 - Uses bold, underline, italics, and font-size tags to emphasize key words
-- Uses `<spk>` tags to mark the words spoken aloud in round ("caveman speak" — short, punchy, hits the main points)
+- Uses `<spk>` tags to mark the words spoken aloud in round — key claims, stats, and conclusions. Aim for roughly **40–60% of the card body**. Mark full meaningful phrases (subject + verb + object), not isolated single words or pure filler (prepositions, articles, conjunctions on their own).
 - Does NOT include analysis, commentary, or any words you generate
 
 ---
 
 ## Cutting rules
 1. Find the section(s) of the Evidence most relevant to the Card Argument (or Argument if no Card Argument given)
-2. Everything from the first word through the last spoken word's sentence must stay — you cannot remove text in the middle; you can only shrink its font
-3. Text after the last spoken sentence can be dropped entirely
-4. Do NOT skip or delete text between spoken words — it must remain at f1 (smallest font)
+2. **ALL text from the Evidence must appear in the card body — you may NEVER omit, skip, or delete any words.** NSDA rules prohibit omission. Every word must be present, even if irrelevant.
+3. Irrelevant or background text must be wrapped in `<f1>` (smallest font) — it stays in the card, just visually de-emphasized
+4. Do NOT skip or delete text between spoken words — it must remain wrapped in `<f1>`
+5. **Spoken text check**: Mark meaningful claim chunks — phrases with a subject, verb, or key stat. Skip pure connective tissue (lone prepositions, articles, filler transitions) unless they're inside a phrase being marked. Reading only the spoken words should give the core argument in natural-sounding bursts. WITH THAT BEING SAID, not all of that should be highlighted, only highlight the important parts when speaking, but keep the only slightly less important parts THE SAME SIZE(largest body font) but not higlighted.
+6. Text after the last spoken sentence must also remain, wrapped in `<f1>`
 
 ---
 
@@ -48,16 +50,16 @@ Only these tags are allowed:
 - `<spk> </spk>` — spoken/highlighted words
 
 ### Special:
-- `<sum> </sum>` — one-line summary of the card's argument (this is the ONLY place you may write your own words)
-- `<cite> </cite>` — empty tag, leave it empty, placed before the card body
+- `<sum> </sum>` — one-line tag/summary of the card's argument (this is the ONLY place you may write your own words)
+- `<cite> </cite>` — citation tag placed before the card body. If a Citation is provided, format as: `LastName YY | Full citation text` (e.g. `Hofmeyr 14 | AB Hofmeyr, 2014, "Title," Publisher`). If no Citation is provided, output `<cite></cite>` with nothing inside — do NOT output a bare placeholder.
 
 ---
 
 ## Output format
 ```
-<sum>[One sentence summary of what the card argues — your words allowed here only]</sum>
+<sum>[One sentence tag/summary of what the card argues — your words allowed here only]</sum>
 
-<cite></cite>
+<cite>[LastName YY | Full citation from the Citation field]</cite>
 [Card body using only verbatim words from Evidence with formatting tags]
 ```
 
@@ -70,6 +72,7 @@ Return ONLY the card. No explanation, no preamble, no closing remarks.
 - **Topic**: The debate resolution
 - **Argument**: The shell/argument this card goes in (e.g. a DA, K, CP)
 - **Card Argument**: The specific claim the card should prove (if blank, use best fit from Evidence)
+- **Citation**: The bibliographic citation for the source (use this verbatim in `<cite>` as `LastName YY | Full citation`)
 - **Evidence**: The SOURCE TEXT — the ONLY text you may quote from
 
 ---

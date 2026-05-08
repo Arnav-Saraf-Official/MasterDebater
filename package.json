@@ -57,6 +57,7 @@
 	"dependencies": {
 		"@lucide/svelte": "^1.14.0",
 		"@supabase/supabase-js": "^2.105.1",
+		"docx": "^9.6.1",
 		"express": "^5.0.0",
 		"keytar": "^7.9.0",
 		"pdf-parse": "^2.4.5"
