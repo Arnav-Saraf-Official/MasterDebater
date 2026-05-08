@@ -88,19 +88,19 @@
 			.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
 			.replace(
 				/<f1>(.*?)<\/f1>/gs,
-				'<span style="font-size:5px;vertical-align:baseline;line-height:1">$1</span>'
+				'<span style="font-size:5pt;vertical-align:baseline;line-height:1">$1</span>'
 			)
-			.replace(/<f2>(.*?)<\/f2>/gs, '<span style="font-size:11px">$1</span>')
-			.replace(/<f3>(.*?)<\/f3>/gs, '<span style="font-size:11px">$1</span>')
-			.replace(/<f4>(.*?)<\/f4>/gs, '<span style="font-size:11px">$1</span>')
-			.replace(/<f5>(.*?)<\/f5>/gs, '<span style="font-size:11px">$1</span>')
+			.replace(/<f2>(.*?)<\/f2>/gs, '<span style="font-size:11pt">$1</span>')
+			.replace(/<f3>(.*?)<\/f3>/gs, '<span style="font-size:11pt">$1</span>')
+			.replace(/<f4>(.*?)<\/f4>/gs, '<span style="font-size:11pt">$1</span>')
+			.replace(/<f5>(.*?)<\/f5>/gs, '<span style="font-size:11pt">$1</span>')
 			.replace(
 				/<spk>(.*?)<\/spk>/gs,
 				'<span style="background-color:#a8d4f5;color:#000;font-weight:700;text-decoration:underline">$1</span>'
 			)
 			.replace(
 				/<sum>(.*?)<\/sum>/gs,
-				'<div style="font-family:Calibri,\'Calibri\',sans-serif;font-size:13px;font-weight:700;margin-bottom:6px;color:#111;line-height:1.4">$1</div>'
+				'<div style="font-family:Calibri,sans-serif;font-size:13pt;font-weight:700;margin-bottom:6px;color:#111;line-height:1.4">$1</div>'
 			)
 			.replace(/<cite>(.*?)<\/cite>/gs, (_, inner) => {
 				const trimmed = inner.trim().replace(/^\|+\s*|\s*\|+$/g, '').trim();
@@ -110,10 +110,10 @@
 					const short = trimmed.slice(0, sepIdx).trim();
 					const full = trimmed.slice(sepIdx + 3).trim();
 					if (!short && !full) return '';
-					if (!short) return `<div style="font-family:'Times New Roman',Times,serif;font-size:8px;color:#555;margin-bottom:4px">[${full}]</div>`;
-					return `<div style="margin-bottom:4px"><span style="font-family:'Times New Roman',Times,serif;font-size:13px;font-weight:700;color:#111">${short}</span> <span style="font-family:'Times New Roman',Times,serif;font-size:8px;color:#555">[${full}]</span></div>`;
+					if (!short) return `<div style="font-family:'Times New Roman',Times,serif;font-size:6pt;margin-bottom:4px">[${full}]</div>`;
+					return `<div style="margin-bottom:4px"><span style="font-family:'Times New Roman',Times,serif;font-size:13pt;font-weight:700;color:#111">${short}</span> <span style="font-family:'Times New Roman',Times,serif;font-size:6pt">[${full}]</span></div>`;
 				}
-				return `<div style="font-family:'Times New Roman',Times,serif;font-size:13px;font-weight:700;margin-bottom:4px;color:#111">${trimmed}</div>`;
+				return `<div style="font-family:'Times New Roman',Times,serif;font-size:13pt;font-weight:700;margin-bottom:4px;color:#111">${trimmed}</div>`;
 			});
 	}
 
@@ -163,7 +163,7 @@
 			f4: { size: 22 },
 			f5: { size: 22 },
 			spk: { highlight: true, bold: true },
-			sum: { bold: true, sum: true },
+			sum: { bold: true, sum: true, size: 26 },
 			cite: { cite: true }
 		};
 		const segs: Seg[] = [];
@@ -174,7 +174,22 @@
 		while ((m = re.exec(raw)) !== null) {
 			if (m[1]) {
 				const tag = m[1];
-				const props: Partial<Seg> =
+				if (tag === 'cite') {
+						const inner = m[2].trim().replace(/^\|+\s*|\s*\|+$/g, '').trim();
+						if (!inner) continue;
+						const sepIdx = inner.indexOf(' | ');
+						if (sepIdx !== -1) {
+							const short = inner.slice(0, sepIdx).trim();
+							const full = inner.slice(sepIdx + 3).trim();
+							if (short) segs.push({ text: short, bold: true, size: 26, cite: true });
+							if (short && full) segs.push({ text: ' ', size: 12, cite: true });
+							if (full) segs.push({ text: `[${full}]`, size: 12, cite: true });
+						} else {
+							segs.push({ text: inner, bold: true, size: 26, cite: true });
+						}
+						continue;
+					}
+					const props: Partial<Seg> =
 					tag === 'b'
 						? { bold: true }
 						: tag === 'u'
@@ -231,7 +246,7 @@
 							size: seg.size ?? 22,
 							font: seg.sum ? 'Calibri' : 'Times New Roman',
 							...(seg.highlight ? { highlight: 'cyan' } : {}),
-							...(seg.cite ? { color: '555555', size: 16 } : {})
+							...(seg.cite ? { color: '555555' } : {})
 						})
 					);
 				}
@@ -330,20 +345,22 @@
 			caseArgument: 'Universal Basic Income',
 			offcaseArgument: 'Welfare Reform Disad',
 			cardArgument: 'UBI reduces poverty',
+			citation: 'Johnson 23 | Emily Johnson, 2023, "Unconditional Cash Transfers and Poverty Reduction," Stanford Social Innovation Review',
 			inputMode: 'text',
 			textContent:
-				'A 2023 Stanford study found unconditional cash transfers of $500/month reduced poverty rates by 40% among recipients over 18 months, with participants more likely to seek employment and education compared to control groups receiving traditional welfare benefits.'
+				'The debate over unconditional cash transfers has intensified in recent years as policymakers search for alternatives to means-tested welfare programs. Proponents argue that direct cash grants empower recipients to allocate resources according to their own needs, while critics contend that such programs disincentivize labor force participation. A number of pilot programs have been conducted across the United States, Kenya, Finland, and Canada to evaluate these competing claims empirically. In the most comprehensive domestic study to date, researchers at Stanford University tracked 1,200 low-income households over an eighteen-month period. Participants received unconditional cash transfers of $500 per month with no strings attached and no work requirements. The results were striking: poverty rates fell by 40% among recipients compared to a matched control group receiving traditional welfare benefits. Participants were also measurably more likely to seek employment and pursue educational opportunities, contradicting the disincentive hypothesis. The authors note that the cash transfers allowed families to cover basic needs reliably, reducing the cognitive burden of scarcity that previous research has shown to impair decision-making. Critics of the study point to its limited geographic scope and relatively short timeframe as reasons for caution before scaling the intervention nationally.'
 		},
 		{
 			label: 'Climate neg text',
 			side: 'negative',
 			model: 'DeepSeek V4 Pro',
 			caseArgument: 'Green New Deal',
-			offcaseArgument: '',
-			cardArgument: 'economic costs outweigh',
+			offcaseArgument: 'Economy Disad',
+			cardArgument: 'economic costs outweigh climate benefits',
+			citation: 'Morris 22 | David Morris, 2022, "The Price of Green Ambition," Brookings Institution Press',
 			inputMode: 'text',
 			textContent:
-				'The Congressional Budget Office estimates the Green New Deal would cost between $51 and $93 trillion over ten years, representing more than double current federal spending, with uncertain emissions reductions that could be achieved at far lower cost through carbon pricing mechanisms.'
+				'Climate policy has become one of the central fault lines in contemporary American political economy. Advocates of aggressive federal intervention point to the mounting costs of extreme weather events and the long-run risks of unchecked warming. Skeptics of expansive legislation, however, argue that the economic disruption of rapid decarbonization could itself impose severe welfare losses, particularly on working-class communities dependent on fossil fuel industries. The Congressional Budget Office released an assessment in 2022 examining the macroeconomic implications of the Green New Deal framework. The agency estimated total expenditures of between $51 trillion and $93 trillion over ten years — more than double the entirety of current federal spending across all programs and departments combined. The CBO further noted that projected emissions reductions under the proposal were highly uncertain, with modeling ranges spanning from modest reductions to outcomes indistinguishable from a business-as-usual trajectory depending on implementation choices and private sector responses. By contrast, economists across the ideological spectrum have consistently found that a revenue-neutral carbon pricing mechanism could achieve equivalent or superior emissions outcomes at a fraction of the cost, on the order of $300 billion to $1 trillion over the same period. The distributional consequences of the Green New Deal\'s spending provisions also remain contested, with some analysts arguing that the bill\'s labor and procurement requirements would primarily benefit unionized workers in high-cost states rather than the most economically vulnerable communities.'
 		}
 	];
 
@@ -353,6 +370,7 @@
 		caseArgument = tc.caseArgument;
 		offcaseArgument = tc.offcaseArgument;
 		cardArgument = tc.cardArgument;
+		citation = tc.citation;
 		inputMode = tc.inputMode;
 		textContent = tc.textContent;
 
@@ -1031,6 +1049,8 @@
 		text-underline-offset: 2px;
 	}
 	:global(.cd-sum) {
+		font-family: Calibri, sans-serif;
+		font-size: 13pt;
 		font-weight: 700;
 		margin-bottom: 6px;
 		line-height: 1.4;
@@ -1039,11 +1059,11 @@
 		margin-bottom: 4px;
 	}
 	:global(.cd-cite-short) {
+		font-size: 13pt;
 		font-weight: 700;
 	}
 	:global(.cd-cite-long) {
-		font-size: 0.75em;
-		color: var(--muted-foreground);
+		font-size: 6pt;
 	}
 
 	@keyframes shimmer {

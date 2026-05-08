@@ -18,7 +18,7 @@ If a word is not in the Evidence, it does not exist for this task. Treat the Evi
 A debate card is a short snippet cut directly from a source to support a debate argument. The card:
 - Contains **only** the exact words of the source (the Evidence input)
 - Uses bold, underline, italics, and font-size tags to emphasize key words
-- Uses `<spk>` tags to mark the words spoken aloud in round — key claims, stats, and conclusions. Aim for roughly **40–60% of the card body**. Mark full meaningful phrases (subject + verb + object), not isolated single words or pure filler (prepositions, articles, conjunctions on their own).
+- Uses `<spk>` tags to mark the words spoken aloud in round — key claims, stats, and conclusions. Aim for roughly **35–50% of the card body**. Mark full meaningful phrases (subject + verb + object), not isolated single words or pure filler (prepositions, articles, conjunctions on their own), but you do not have to highlight everything, some can stay big and bolded without being highlighted.
 - Does NOT include analysis, commentary, or any words you generate
 
 ---
@@ -26,10 +26,11 @@ A debate card is a short snippet cut directly from a source to support a debate 
 ## Cutting rules
 1. Find the section(s) of the Evidence most relevant to the Card Argument (or Argument if no Card Argument given)
 2. **ALL text from the Evidence must appear in the card body — you may NEVER omit, skip, or delete any words.** NSDA rules prohibit omission. Every word must be present, even if irrelevant.
-3. Irrelevant or background text must be wrapped in `<f1>` (smallest font) — it stays in the card, just visually de-emphasized
-4. Do NOT skip or delete text between spoken words — it must remain wrapped in `<f1>`
-5. **Spoken text check**: Mark meaningful claim chunks — phrases with a subject, verb, or key stat. Skip pure connective tissue (lone prepositions, articles, filler transitions) unless they're inside a phrase being marked. Reading only the spoken words should give the core argument in natural-sounding bursts. WITH THAT BEING SAID, not all of that should be highlighted, only highlight the important parts when speaking, but keep the only slightly less important parts THE SAME SIZE(largest body font) but not higlighted.
-6. Text after the last spoken sentence must also remain, wrapped in `<f1>`
+3. **f1 = everything that is NOT the core claim.** This includes: intro/framing sentences, author attribution ("X writes that…"), transitional sentences, counterarguments, methodology background, footnote numbers, and any sentence that doesn't directly advance the Card Argument. When in doubt, use `<f1>`. Most cards should have large f1 sections at the start and end.
+4. **f2 = the core claim sentences only** — the sentences that directly prove the Card Argument. Use f2 for relevant body text that is NOT spoken. Do NOT use f2 for background, framing, or intro sentences just because they appear near the key claim.
+5. Do NOT skip or delete text between spoken words — it must remain wrapped in `<f1>`
+6. **Spoken text check**: Within f2 sentences, mark key claim phrases with `<spk>` — aim for 40–60% of f2 text. Skip pure connective tissue (lone prepositions, articles). Reading only the spoken words should give the core argument in natural-sounding bursts.
+7. Text after the last spoken sentence must also remain, wrapped in `<f1>`
 
 ---
 
@@ -37,11 +38,11 @@ A debate card is a short snippet cut directly from a source to support a debate 
 Only these tags are allowed:
 
 ### Font sizes (f1 smallest → f5 largest):
-- `<f1> </f1>`
-- `<f2> </f2>`
-- `<f3> </f3>`
-- `<f4> </f4>`
-- `<f5> </f5>`
+- `<f1> </f1>` — irrelevant/background text (tiny, de-emphasized). Use for ALL non-core sentences.
+- `<f2> </f2>` — standard body size for relevant claim text
+- `<f3> </f3>` — slightly larger emphasis within claims
+- `<f4> </f4>` — larger emphasis
+- `<f5> </f5>` — largest emphasis (use sparingly for the single most critical phrase)
 
 ### Emphasis:
 - `<b> </b>` — bold (most important words)
