@@ -67,13 +67,11 @@ function handleDeepLink(url: string) {
 
 async function createWindow(): Promise<void> {
 	console.log('[MasterDebater] Creating window...');
-	// Start the local API server
-	try {
-		await createServer(PORT);
-		console.log('[MasterDebater] Local server started on port', PORT);
-	} catch (err) {
-		console.error('[MasterDebater] Failed to start local server:', err);
-	}
+
+	// start server and create window in parallel
+	void createServer(PORT)
+		.then(() => console.log('[MasterDebater] Local server started on port', PORT))
+		.catch((err) => console.error('[MasterDebater] Failed to start local server:', err));
 
 	mainWindow = new BrowserWindow({
 		width: 1200,

@@ -1,15 +1,28 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://njvfstduswdwdmyntzow.supabase.co';
 const supabaseKey = 'sb_publishable_25apIwJcdMrnMkTqOcZEjg_3NWawQuS';
 
-const isBrowser = typeof window !== 'undefined';
+let _client: SupabaseClient | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-	auth: {
-		flowType: 'pkce',
-		persistSession: true,
-		detectSessionInUrl: false, // We handle it manually in callback
-		storage: isBrowser ? window.localStorage : undefined
+export function getSupabase(): SupabaseClient {
+	if (!_client) {
+		const isBrowser = typeof window !== 'undefined';
+		_client = createClient(supabaseUrl, supabaseKey, {
+			auth: {
+				flowType: 'pkce',
+				persistSession: true,
+				detectSessionInUrl: false,
+				storage: isBrowser ? window.localStorage : undefined
+			}
+		});
+	}
+	return _client;
+}
+
+// convenience alias
+export const supabase = new Proxy({} as SupabaseClient, {
+	get(_, prop) {
+		return (getSupabase() as never)[prop];
 	}
 });

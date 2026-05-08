@@ -1,23 +1,114 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Karla:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap');
+@font-face {
+  font-family: 'Cormorant';
+  font-style: italic;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/H4c0BXOCl9bbnla_nHIq6oGzilJm9otsA9kQ9fdq6A.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Cormorant';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/H4c0BXOCl9bbnla_nHIq6oGzilJm9otsA9kQq_dq6A.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Cormorant';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/H4c2BXOCl9bbnla_nHIA47NMUjsNbCVrFk9TQ7Q.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Cormorant';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/H4c2BXOCl9bbnla_nHIA47NMUjsNbCVrFhFTQ7Q.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Cormorant';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/H4c2BXOCl9bbnla_nHIA47NMUjsNbCVrFiNTQ7Q.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Cormorant';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/H4c2BXOCl9bbnla_nHIA47NMUjsNbCVrFs9UQ7Q.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Cormorant';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/H4c2BXOCl9bbnla_nHIA47NMUjsNbCVrFvZUQ7Q.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Karla';
+  font-style: italic;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/qkBKXvYC6trAT7RQNNK2EG7SIwPWMNkcV0lP.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Karla';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/qkBKXvYC6trAT7RQNNK2EG7SIwPWMNlCV0lP.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Karla';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/qkBIXvYC6trAT55ZBi1ueQVIjQTDppqqFA.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Karla';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/qkBIXvYC6trAT55ZBi1ueQVIjQTD-JqqFA.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Karla';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/qkBIXvYC6trAT55ZBi1ueQVIjQTDypqqFA.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Karla';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/qkBIXvYC6trAT55ZBi1ueQVIjQTDJp2qFA.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Karla';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/qkBIXvYC6trAT55ZBi1ueQVIjQTDH52qFA.ttf') format('truetype');
+}
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
-/* ========================================
-   Vanilla Bean Design System — MasterDebater
-   ======================================== */
 
-/* Google Fonts — Cormorant for headings, Karla for body */
 
-/* ========================================
-   Theme Tokens
-   ======================================== */
+/* fonts -> cormorant for headings, karla for body */
+
+/* theme toks */
 @theme {
-	/* Font families */
 	--font-heading: 'Cormorant', ui-serif, Georgia, serif;
 	--font-body: 'Karla', ui-sans-serif, system-ui, sans-serif;
 
-	/* Color palette — vanilla bean */
 	--color-primary: #d97706;
 	--color-on-primary: #ffffff;
 	--color-secondary: #76654cff;
@@ -33,7 +124,7 @@
 	--color-destructive: #dc2626;
 	--color-ring: #78716c;
 
-	/* Extended neutrals */
+	/* neutrals */
 	--color-cream-50: #fffdf7;
 	--color-cream-100: #fffbeb;
 	--color-cream-200: #fff5d4;
@@ -43,25 +134,20 @@
 	--color-amber-warm: #d97706;
 	--color-amber-warm-light: #f59e0b;
 
-	/* Custom spacing for editorial feel */
 	--spacing-section: 1rem;
 
-	/* Animation durations */
 	--animate-duration-fast: 50ms;
 	--animate-duration-normal: 150ms;
 	--animate-duration-slow: 300ms;
 	--animate-duration-entrance: 500ms;
 
-	/* Keyframe animations */
 	--animate-fade-in-up: fade-in-up 0.5s ease-out both;
 	--animate-fade-in: fade-in 0.4s ease-out both;
 	--animate-scale-in: scale-in 0.3s ease-out both;
 	--animate-slide-in-right: slide-in-right 0.4s ease-out both;
 }
 
-/* ========================================
-   Keyframes
-   ======================================== */
+/* anims */
 @keyframes fade-in-up {
 	from {
 		opacity: 0;
@@ -104,9 +190,7 @@
 	}
 }
 
-/* ========================================
-   Base Styles
-   ======================================== */
+/* base */
 @layer base {
 	html {
 		background-color: var(--color-background);
@@ -138,9 +222,7 @@
 	}
 }
 
-/* ========================================
-   Animation Utilities
-   ======================================== */
+/* anim util */
 @layer utilities {
 	/* Stagger delay utilities */
 	.stagger-1 {
@@ -162,7 +244,6 @@
 		animation-delay: 400ms;
 	}
 
-	/* Press feedback — subtle scale on click */
 	.press-feedback {
 		transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 	}
@@ -170,7 +251,6 @@
 		transform: scale(0.97);
 	}
 
-	/* Subtle hover lift */
 	.hover-lift {
 		transition:
 			transform 100ms ease-out,
@@ -182,9 +262,7 @@
 	}
 }
 
-/* ========================================
-   Reduced Motion
-   ======================================== */
+/* a11y */
 @media (prefers-reduced-motion: reduce) {
 	*,
 	*::before,
