@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { Send, UploadCloud, FileText, Trash2, Mic, Settings, Copy } from '@lucide/svelte';
-	import { browser } from '$app/environment';
+	import { UploadCloud, Trash2, Mic, Copy, X } from '@lucide/svelte';
+	import CircleQuestionMark from '@lucide/svelte/icons/circle-question-mark';
+
+	let helpOpen = $state(false);
 	import { processMasterSpeakDoc } from '$lib/masterspeak';
 
 	const WELCOME = 'Welcome to MasterSpeak! Upload a .docx file with your cards to get started.';
@@ -50,10 +52,11 @@
 		try {
 			const result = await processMasterSpeakDoc(submittedFile);
 			messages = [...messages, { role: 'assistant', content: result, timestamp: Date.now() }];
-		} catch (e: any) {
+		} catch (e: unknown) {
+			const msg = e instanceof Error ? e.message : String(e);
 			messages = [
 				...messages,
-				{ role: 'assistant', content: `Error: ${e.message}`, timestamp: Date.now() }
+				{ role: 'assistant', content: `Error: ${msg}`, timestamp: Date.now() }
 			];
 		} finally {
 			isProcessing = false;
@@ -68,7 +71,7 @@
 		try {
 			await navigator.clipboard.writeText(content);
 			triggerToast('Copied to clipboard!');
-		} catch (err) {
+		} catch (e: unknown) {
 			triggerToast('Failed to copy.');
 		}
 	}
@@ -120,7 +123,14 @@
 				class="stagger-2 mb-6 flex min-h-[500px] flex-1 animate-fade-in-up flex-col space-y-4 overflow-y-auto rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border"
 			>
 				<!-- clear chat button -->
-				<div class="flex justify-end">
+				<div class="flex justify-between">
+					<button
+						type="button"
+						onclick={() => (helpOpen = true)}
+						class="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:bg-background hover:text-foreground"
+					>
+						<CircleQuestionMark size={13} /> Guide
+					</button>
 					<button
 						type="button"
 						onclick={clearChat}
@@ -130,7 +140,7 @@
 					</button>
 				</div>
 
-				{#each messages as message, i}
+				{#each messages as message (message.timestamp)}
 					<div class="flex w-full {message.role === 'user' ? 'justify-end' : 'justify-start'}">
 						<div
 							class="group max-w-[85%] rounded-2xl p-4 shadow-sm {message.role === 'user'
@@ -163,7 +173,7 @@
 									? 'text-sm leading-relaxed whitespace-pre-wrap text-on-primary/90'
 									: 'text-sm leading-relaxed text-foreground'}
 							>
-								{@html renderDisplay(message.content)}
+								{renderDisplay(message.content)}
 							</div>
 							{#if message.timestamp}
 								<div
@@ -230,59 +240,49 @@
 			</div>
 		</div>
 
-		<!-- Sidebar Guide -->
-		<aside class="max-w-[20vw]">
-			<div
-				class="stagger-3 sticky top-32 animate-fade-in-up space-y-6 rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border"
-			>
-				<div>
-					<h2 class="flex items-center gap-2 text-lg font-semibold text-foreground">
-						<Settings size={18} class="text-primary" />
-						Guide
-					</h2>
-					<div class="mt-4 space-y-4">
-						<div>
-							<h3 class="text-xs font-bold text-muted-foreground uppercase">Format</h3>
-							<p class="mt-1 text-sm text-foreground">
-								Only <strong>.docx</strong> files are supported for processing.
-							</p>
-						</div>
-						<div>
-							<h3 class="text-xs font-bold text-muted-foreground uppercase">How it works</h3>
-							<ul class="mt-2 space-y-2 text-sm text-muted-foreground">
-								<li class="flex gap-2">
-									<span class="font-bold text-primary">1.</span>
-									<span>
-										Upload your cards with
-										<a
-											href="https://paperlessdebate.com/verbatim/"
-											target="_blank"
-											class="text-accent">Verbatim</a
-										>/standard formating as a .docx.
-									</span>
-								</li>
-								<li class="flex gap-2">
-									<span class="font-bold text-primary">2.</span>
-									Our AI engine will anaylize your card structure and tags.
-								</li>
-								<li class="flex gap-2">
-									<span class="font-bold text-primary">3.</span>
-									It will compile and give a polished "read-off" document.
-								</li>
-							</ul>
-						</div>
-						<div class="rounded-lg bg-primary/5 p-4 ring-1 ring-primary/10">
-							<p class="text-xs leading-relaxed text-primary">
-								<strong>Note:</strong> Make sure your doc only contains cards. We currently do not support
-								any addional features such as hats, pocket, block, etc.
-							</p>
-						</div>
-					</div>
-				</div>
-			</div>
-		</aside>
 	</div>
 </div>
+
+{#if helpOpen}
+	<div
+		class="fixed inset-0 z-40 flex items-center justify-center bg-black/30"
+		role="presentation"
+		onclick={() => (helpOpen = false)}
+	>
+		<div
+			class="relative w-full max-w-sm rounded-2xl bg-card p-6 shadow-xl ring-1 ring-border"
+			role="dialog"
+			aria-modal="true"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
+		>
+			<button
+				type="button"
+				onclick={() => (helpOpen = false)}
+				class="absolute top-3 right-3 rounded p-1 text-muted-foreground hover:text-foreground"
+			><X size={16} /></button>
+			<h2 class="mb-4 text-base font-semibold text-foreground">MasterSpeak Guide</h2>
+			<div class="space-y-4">
+				<div>
+					<h3 class="text-xs font-bold text-muted-foreground uppercase">Format</h3>
+					<p class="mt-1 text-sm text-foreground">Only <strong>.docx</strong> files are supported.</p>
+				</div>
+				<div>
+					<h3 class="text-xs font-bold text-muted-foreground uppercase">How it works</h3>
+					<ul class="mt-2 space-y-2 text-sm text-muted-foreground">
+						<li class="flex gap-2"><span class="font-bold text-primary">1.</span><span>Upload your cards with <a href="https://paperlessdebate.com/verbatim/" target="_blank" class="text-accent">Verbatim</a>/standard formatting as a .docx.</span></li>
+						<li class="flex gap-2"><span class="font-bold text-primary">2.</span> Our AI engine will analyze your card structure and tags.</li>
+						<li class="flex gap-2"><span class="font-bold text-primary">3.</span> It will compile and give a polished "read-off" document.</li>
+					</ul>
+				</div>
+				<div class="rounded-lg bg-primary/5 p-4 ring-1 ring-primary/10">
+					<p class="text-xs leading-relaxed text-primary"><strong>Note:</strong> Make sure your doc only contains cards. Hats, pocket, block, etc. are not supported.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}
 
 {#if activeToast}
 	<div

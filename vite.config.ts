@@ -5,7 +5,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
-	optimizeDeps: { include: ['@supabase/supabase-js', 'lucide-svelte'] },
+	optimizeDeps: { include: ['@supabase/supabase-js'] },
 	build: {
 		target: 'chrome120',
 		minify: 'esbuild',
@@ -13,7 +13,7 @@ export default defineConfig({
 			output: {
 				manualChunks(id) {
 					if (id.includes('@supabase')) return 'supabase';
-					if (id.includes('lucide-svelte')) return 'icons';
+					if (id.includes('@lucide/svelte')) return 'icons';
 				}
 			}
 		}

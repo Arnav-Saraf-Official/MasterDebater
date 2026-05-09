@@ -104,8 +104,15 @@ async function loadSystemPrompt(filePath: string): Promise<string> {
 		return '';
 	}
 }
+let systemPromptCache: Promise<string> | null = null;
+
+function getSystemPrompt(): Promise<string> {
+	systemPromptCache ??= loadSystemPrompt('static/system/masterCard.md');
+	return systemPromptCache;
+}
+
 async function fetchFromUrl(url: string): Promise<string> {
-	const response = await fetch(url);
+	const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
 	if (!response.ok) {
 		throw new Error(`Failed to fetch from URL: ${response.statusText}`);
 	}
@@ -164,7 +171,7 @@ export async function _generateCardQuery(
 		api_key: apiKey,
 		provider: modelConfig.provider,
 		model: modelConfig.model_id,
-		system_prompt: await loadSystemPrompt('static/system/masterCard.md'),
+		system_prompt: await getSystemPrompt(),
 		prompt: `
 		
 		Side: ${side}

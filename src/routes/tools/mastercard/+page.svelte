@@ -11,8 +11,12 @@
 		RefreshCw,
 		Download,
 		FileDown,
-		ClipboardCopy
+		ClipboardCopy,
+		X
 	} from '@lucide/svelte';
+	import CircleQuestionMark from '@lucide/svelte/icons/circle-question-mark';
+
+	let helpOpen = $state(false);
 	import { supabase } from '$lib/supabase';
 	import { browser } from '$app/environment';
 
@@ -317,19 +321,6 @@
 		return `${Math.floor(diff / 3600)}h ago`;
 	}
 
-	// progressively reveal idk if ts will work with the worker
-	function streamIntoLast(fullText: string) {
-		let i = 0;
-		const base = { ...messages[messages.length - 1] };
-		const tick = () => {
-			if (i >= fullText.length) return;
-			i = Math.min(i + 8, fullText.length);
-			messages[messages.length - 1] = { ...base, content: fullText.slice(0, i) };
-			requestAnimationFrame(tick);
-		};
-		requestAnimationFrame(tick);
-	}
-
 	function handleKeydown(e: KeyboardEvent) {
 		if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
 			e.preventDefault();
@@ -449,10 +440,9 @@
 			const content = result.choices?.[0]?.message?.content || 'No response from AI.';
 			messages = [
 				...messages,
-				{ role: 'assistant', content: '', timestamp: Date.now(), modelName: p.model }
+				{ role: 'assistant', content, timestamp: Date.now(), modelName: p.model }
 			];
 			isProcessing = false;
-			streamIntoLast(content);
 			return;
 		} catch (e: any) {
 			messages = [
@@ -621,13 +611,20 @@
 		</p>
 	</div>
 	<div class="flex gap-4">
-		<span class="w-[100%]">
+		<span class="w-full">
 			<div
 				bind:this={chatEl}
 				class="stagger-2 mb-6 flex min-h-[400px] flex-1 animate-fade-in-up flex-col space-y-4 overflow-y-auto rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border"
 			>
 				<!-- clear chat button -->
-				<div class="flex justify-end">
+				<div class="flex justify-between">
+					<button
+						type="button"
+						onclick={() => (helpOpen = true)}
+						class="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-muted-foreground transition-all hover:bg-background hover:text-foreground"
+					>
+						<CircleQuestionMark size={13} /> Guide
+					</button>
 					<button
 						type="button"
 						onclick={clearChat}
@@ -960,28 +957,39 @@
 				</form>
 			</div>
 		</span>
+	</div>
+
+	{#if helpOpen}
 		<div
-			class="stagger-3 max-w-[20vw] animate-fade-in-up rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border"
+			class="fixed inset-0 z-40 flex items-center justify-center bg-black/30"
+			role="presentation"
+			onclick={() => (helpOpen = false)}
 		>
-			<h1 class="text-2xl">MasterCard Guide</h1>
-			<hr class="my-2 border-border" />
-			<div class="flex flex-col gap-2">
-				<p class="text-sm text-muted-foreground">1. Select your side (Affirmative or Negative)</p>
-				<p class="text-sm text-muted-foreground">
-					2. Provide your case argument. This is the main case position this card supports.
-				</p>
-				<p class="text-sm text-muted-foreground">
-					3. Provide an offcase argument (Optional). This is for disadvantages, counterplans, or
-					critiques that this card relates to.
-				</p>
-				<p class="text-sm text-muted-foreground">4. Provide your card argument (Optional)</p>
-				<p class="text-sm text-muted-foreground">
-					5. Select one source format (Text, Link, or File)
-				</p>
-				<p class="text-sm text-muted-foreground">6. Click "Generate Card" to create your card</p>
+			<div
+				class="relative w-full max-w-sm rounded-2xl bg-card p-6 shadow-xl ring-1 ring-border"
+				role="dialog"
+				aria-modal="true"
+				tabindex="-1"
+				onclick={(e) => e.stopPropagation()}
+				onkeydown={(e) => e.stopPropagation()}
+			>
+				<button
+					type="button"
+					onclick={() => (helpOpen = false)}
+					class="absolute top-3 right-3 rounded p-1 text-muted-foreground hover:text-foreground"
+				><X size={16} /></button>
+				<h2 class="mb-3 text-base font-semibold text-foreground">MasterCard Guide</h2>
+				<div class="flex flex-col gap-2">
+					<p class="text-sm text-muted-foreground">1. Select your side (Affirmative or Negative)</p>
+					<p class="text-sm text-muted-foreground">2. Provide your case argument — the main position this card supports.</p>
+					<p class="text-sm text-muted-foreground">3. Provide an offcase argument (Optional) — for disadvantages, counterplans, or critiques.</p>
+					<p class="text-sm text-muted-foreground">4. Provide your card argument (Optional)</p>
+					<p class="text-sm text-muted-foreground">5. Select one source format (Text, Link, or File)</p>
+					<p class="text-sm text-muted-foreground">6. Click "Generate Card" to create your card</p>
+				</div>
 			</div>
 		</div>
-	</div>
+	{/if}
 </div>
 
 {#if activeToast}
