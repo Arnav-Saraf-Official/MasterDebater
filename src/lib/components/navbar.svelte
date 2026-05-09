@@ -29,9 +29,21 @@
 				<div class="h-6 w-[1px] bg-primary/20"></div>
 				<a
 					href="/about"
-					class="press-feedback mx-4 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium whitespace-nowrap text-on-primary transition-colors hover:bg-primary/90"
+					class="press-feedback mx-2 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium whitespace-nowrap text-on-primary transition-colors hover:bg-primary/90"
 				>
 					About
+				</a>
+				<a
+					href="/tools/mastercard"
+					class="press-feedback mx-2 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium whitespace-nowrap text-on-primary transition-colors hover:bg-primary/90"
+				>
+					MasterCard
+				</a>
+				<a
+					href="/tools/masterspeak"
+					class="press-feedback mx-2 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium whitespace-nowrap text-on-primary transition-colors hover:bg-primary/90"
+				>
+					MasterSpeak
 				</a>
 				{#if page.url.pathname !== '/login'}
 					<a class="press-feedback mr-4 text-primary" href="/login" aria-label="Login">

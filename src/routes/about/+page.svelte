@@ -27,7 +27,7 @@
 </section>
 
 <section class="px-6 pb-section md:px-12">
-	<div class="mx-auto w-full max-w-[80vw] rounded-2xl bg-accent/40 p-5">
+	<div class="mx-auto w-full max-w-[80vw] rounded-2xl bg-accent/20 p-5">
 		<AnimateOnScroll animation="animate-fade-in-up" stagger={2}>
 			<article
 				class="prose prose-lg max-w-3xl prose-headings:font-heading prose-headings:font-medium prose-headings:text-foreground prose-p:text-secondary prose-a:text-primary hover:prose-a:text-primary/80 prose-strong:text-foreground prose-li:text-secondary"
