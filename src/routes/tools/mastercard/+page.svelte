@@ -31,6 +31,18 @@
 	let chatEl = $state<HTMLElement>();
 	let openMenu = $state<{ index: number; menu: 'copy' | 'dl' } | null>(null);
 
+	function streamIntoLast(content: string) {
+		let i = 0;
+		const interval = setInterval(() => {
+			if (i >= content.length) { clearInterval(interval); return; }
+			messages[messages.length - 1] = {
+				...messages[messages.length - 1],
+				content: messages[messages.length - 1].content + content[i]
+			};
+			i++;
+		}, 8);
+	}
+
 	function toggleMenu(index: number, menu: 'copy' | 'dl') {
 		openMenu = openMenu?.index === index && openMenu.menu === menu ? null : { index, menu };
 	}
