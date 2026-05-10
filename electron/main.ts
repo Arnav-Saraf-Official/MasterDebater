@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
+import fs from 'node:fs';
 import keytar from 'keytar';
 import { createServer } from './server.js';
 
@@ -11,6 +12,31 @@ const PORT = 3456;
 let mainWindow: MainWindow | null = null;
 
 console.log('[MasterDebater] Main process starting...');
+
+// Logging setup for production
+function setupLogging() {
+	if (!isDev) {
+		const logPath = path.join(app.getPath('userData'), 'app.log');
+		const logStream = fs.createWriteStream(logPath, { flags: 'a' });
+		const originalLog = console.log;
+		const originalError = console.error;
+
+		console.log = (...args: any[]) => {
+			const msg = `[${new Date().toISOString()}] LOG: ${args.join(' ')}\n`;
+			logStream.write(msg);
+			originalLog(...args);
+		};
+
+		console.error = (...args: any[]) => {
+			const msg = `[${new Date().toISOString()}] ERROR: ${args.join(' ')}\n`;
+			logStream.write(msg);
+			originalError(...args);
+		};
+
+		console.log('--- Logging initialized ---');
+		console.log('Log file:', logPath);
+	}
+}
 
 if (process.defaultApp) {
 	console.log('[MasterDebater] Running in default app mode');
@@ -155,6 +181,7 @@ ipcMain.handle('ai:request', async (_, payload) => {
 });
 
 app.whenReady().then(() => {
+	setupLogging();
 	console.log('[MasterDebater] App ready');
 	createWindow();
 });
