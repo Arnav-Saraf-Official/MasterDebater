@@ -15,16 +15,22 @@ publish:
 
 win:
   target:
-    - nsis
-    - portable
+    - target: nsis
+      arch: x64
+    - target: portable
+      arch: x64
   icon: static/icon.png
-  arch:
-    - x64
 
 mac:
   target:
-    - dmg
-    - zip
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
   icon: static/icon.icns
 
 linux:
