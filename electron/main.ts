@@ -82,7 +82,7 @@ async function createWindow(): Promise<void> {
 	});
 	mainWindow.once('ready-to-show', () => mainWindow!.show());
 	mainWindow.webContents.on('console-message', (e, _level, message) => {
-		if (message.includes('Autofill')) e.preventDefault();
+		if (message.includes('Autofill') || message.includes('Electron Security Warning')) e.preventDefault();
 	});
 
 	if (isDev) {
