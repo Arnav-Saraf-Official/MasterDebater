@@ -1,43 +1,30 @@
 directories:
-  output: release
+  output: dist
 
 asar: false
 
 files:
   - build/**/*
-  - dist-electron/main.cjs
-  - dist-electron/main.cjs.map
-  - dist-electron/preload.cjs
-  - dist-electron/preload.cjs.map
+  - dist-electron/**/*
   - package.json
+
+publish:
+  provider: github
+  owner: Arnav-Saraf-Official
+  repo: MasterDebater
 
 win:
   target:
-    - target: nsis
-      arch:
-        - x64
-    - target: portable
-      arch:
-        - x64
-    - target: dir
-      arch:
-        - x64
+    - nsis
+    - portable
   icon: static/icon.png
+  arch:
+    - x64
 
 mac:
   target:
-    - target: dmg
-      arch:
-        - x64
-        - arm64
-    - target: zip
-      arch:
-        - x64
-        - arm64
-    - target: dir
-      arch:
-        - x64
-        - arm64
+    - dmg
+    - zip
   icon: static/icon.icns
 
 linux:

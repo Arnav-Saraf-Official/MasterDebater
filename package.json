@@ -22,15 +22,6 @@
 		"release:premajor": "node scripts/release.mjs premajor",
 		"release:major": "node scripts/release.mjs major"
 	},
-	"build": {
-		"publish": [
-			{
-				"provider": "github",
-				"owner": "Arnav-Saraf-Official",
-				"repo": "MasterDebater"
-			}
-		]
-	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.4",
 		"@eslint/js": "^10.0.1",
