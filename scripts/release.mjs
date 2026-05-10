@@ -22,7 +22,9 @@ try {
 		throw new Error('Missing GH_TOKEN in environment (.env)');
 	}
 
-	execSync(`cross-env GH_TOKEN=${process.env.GH_TOKEN} npm run build:win`, { stdio: 'inherit' });
+	execSync(`cross-env GH_TOKEN=${process.env.GH_TOKEN} npm run build:win-release`, {
+		stdio: 'inherit'
+	});
 
 	console.log('\n✅ Release complete\n');
 } catch (err) {
