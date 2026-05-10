@@ -49,8 +49,8 @@ function handleDeepLink(url: string) {
 	if (mainWindow) {
 		const route = url.replace('masterdebater://', '');
 		const targetUrl = isDev
-			? `http://localhost:5188/${route}`
-			: `http://localhost:${PORT}/${route}`;
+			? `http://127.0.0.1:5188/${route}`
+			: `http://127.0.0.1:${PORT}/${route}`;
 		console.log('[MasterDebater] Navigating to target:', targetUrl);
 		mainWindow.loadURL(targetUrl).catch((err) => {
 			console.error('[MasterDebater] Failed to load deep link URL:', err);
@@ -61,10 +61,13 @@ function handleDeepLink(url: string) {
 async function createWindow(): Promise<void> {
 	console.log('[MasterDebater] Creating window...');
 
-	// start server and create window in parallel
-	void createServer(PORT)
-		.then(() => console.log('[MasterDebater] Local server started on port', PORT))
-		.catch((err) => console.error('[MasterDebater] Failed to start local server:', err));
+	// start server
+	try {
+		await createServer(PORT, isDev);
+		console.log('[MasterDebater] Local server started on port', PORT);
+	} catch (err) {
+		console.error('[MasterDebater] Failed to start local server:', err);
+	}
 
 	mainWindow = new BrowserWindow({
 		width: 1200,
@@ -86,14 +89,14 @@ async function createWindow(): Promise<void> {
 	});
 
 	if (isDev) {
-		console.log('[MasterDebater] Loading dev URL: http://localhost:5188');
-		mainWindow.loadURL('http://localhost:5188').catch((err) => {
+		console.log('[MasterDebater] Loading dev URL: http://127.0.0.1:5188');
+		mainWindow.loadURL('http://127.0.0.1:5188').catch((err) => {
 			console.error('[MasterDebater] Failed to load dev URL:', err);
 		});
 		mainWindow.webContents.openDevTools();
 	} else {
-		console.log('[MasterDebater] Loading production URL');
-		mainWindow.loadURL(`http://localhost:${PORT}`).catch((err) => {
+		console.log('[MasterDebater] Loading production URL: http://127.0.0.1:' + PORT);
+		mainWindow.loadURL(`http://127.0.0.1:${PORT}`).catch((err) => {
 			console.error('[MasterDebater] Failed to load production URL:', err);
 		});
 	}
