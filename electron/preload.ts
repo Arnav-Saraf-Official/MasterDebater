@@ -9,18 +9,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	saveFileDialog: (options: Electron.SaveDialogOptions) =>
 		ipcRenderer.invoke('dialog:save', options),
 
-	// -------------------------
-	// SECURE STORAGE
-	// -------------------------
+	// storage
 	setApiKey: (key: string) => ipcRenderer.invoke('secure:set-api-key', key),
 
 	getApiKey: () => ipcRenderer.invoke('secure:get-api-key'),
 
 	deleteApiKey: () => ipcRenderer.invoke('secure:delete-api-key'),
 
-	// -------------------------
-	// AI REQUEST (SAFE PATH)
-	// -------------------------
+	// ai req
 	callAI: (payload: {
 		prompt: string;
 		system_prompt?: string;

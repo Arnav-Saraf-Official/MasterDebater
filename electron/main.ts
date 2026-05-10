@@ -1,21 +1,16 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { createServer } from './server.js';
 import keytar from 'keytar';
-import { ipcMain } from 'electron';
+import { createServer } from './server.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+type MainWindow = InstanceType<typeof BrowserWindow>;
 
 const isDev = !!process.env.ELECTRON_DEV || !app.isPackaged;
 const PORT = 3456;
 
-let mainWindow: BrowserWindow | null = null;
+let mainWindow: MainWindow | null = null;
 
 console.log('[MasterDebater] Main process starting...');
-
-// ─── Protocol Registration ───────────────────────────────────────────
 
 if (process.defaultApp) {
 	console.log('[MasterDebater] Running in default app mode');
@@ -29,9 +24,9 @@ if (process.defaultApp) {
 	app.setAsDefaultProtocolClient('masterdebater');
 }
 
-const gotTheLock = app.requestSingleInstanceLock();
+const gotLock = app.requestSingleInstanceLock();
 
-if (!gotTheLock) {
+if (!gotLock) {
 	console.log('[MasterDebater] Failed to get single instance lock, quitting.');
 	app.quit();
 } else {
@@ -46,8 +41,6 @@ if (!gotTheLock) {
 		if (url) handleDeepLink(url);
 	});
 }
-
-// ─── Deep Link Handling ──────────────────────────────────────────────
 
 function handleDeepLink(url: string) {
 	console.log('[MasterDebater] Handling deep link:', url);
@@ -82,7 +75,7 @@ async function createWindow(): Promise<void> {
 		backgroundColor: '#FFFBEB',
 		show: false,
 		webPreferences: {
-			preload: path.join(__dirname, 'preload.js'),
+			preload: path.join(__dirname, 'preload.cjs'),
 			nodeIntegration: false,
 			contextIsolation: true
 		}
@@ -120,18 +113,15 @@ async function createWindow(): Promise<void> {
 const SERVICE = 'masterdebater';
 const ACCOUNT = 'api_key';
 
-// Save API key
 ipcMain.handle('secure:set-api-key', async (_, key: string) => {
 	await keytar.setPassword(SERVICE, ACCOUNT, key);
 	return true;
 });
 
-// Get API key
 ipcMain.handle('secure:get-api-key', async () => {
 	return await keytar.getPassword(SERVICE, ACCOUNT);
 });
 
-// Delete API key
 ipcMain.handle('secure:delete-api-key', async () => {
 	await keytar.deletePassword(SERVICE, ACCOUNT);
 	return true;

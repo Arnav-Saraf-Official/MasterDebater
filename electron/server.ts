@@ -1,25 +1,17 @@
 import express, { type Request, type Response } from 'express';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
- * Create and start the local API server.
- * In production, this also serves the SvelteKit static build.
- * In development, only the API is served (SvelteKit dev server handles the UI).
+ * create and start the local api server
  */
 export async function createServer(port: number): Promise<void> {
 	const app = express();
-	const isDev = !!(process.env.ELECTRON_DEV);
+	const isDev = !!process.env.ELECTRON_DEV;
 
-	// Parse JSON bodies
 	app.use(express.json());
 
-	// ─── API Routes ───────────────────────────────────────────────
+	// api routes---
 
-	// Health check
 	app.get('/api/health', (_req: Request, res: Response) => {
 		res.json({ status: 'ok', timestamp: Date.now() });
 	});
@@ -37,20 +29,20 @@ export async function createServer(port: number): Promise<void> {
 	// app.post('/api/files/write', async (req, res) => { ... });
 	// app.post('/api/files/export-cards', async (req, res) => { ... });
 
-	// ─── Static File Serving (Production Only) ────────────────────
+	// static file serving (prod only)
 
 	if (!isDev) {
 		const buildPath = path.join(__dirname, '../build');
-		// Serve SvelteKit static build
-		app.use(express.static(buildPath));
 
-		// SPA fallback — all non-API routes serve index.html
+		app.use(express.static(buildPath)); //serve
+
+		// spa fallback
 		app.get('*', (_req: Request, res: Response) => {
 			res.sendFile(path.join(buildPath, 'index.html'));
 		});
 	}
 
-	// Start listening
+	// listen
 	return new Promise((resolve) => {
 		app.listen(port, () => {
 			console.log(`[MasterDebater] Local server running on http://localhost:${port}`);

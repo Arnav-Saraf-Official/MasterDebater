@@ -71,7 +71,7 @@
 		try {
 			await navigator.clipboard.writeText(content);
 			triggerToast('Copied to clipboard!');
-		} catch (e: unknown) {
+		} catch {
 			triggerToast('Failed to copy.');
 		}
 	}
@@ -239,7 +239,6 @@
 				</div>
 			</div>
 		</div>
-
 	</div>
 </div>
 
@@ -261,23 +260,43 @@
 				type="button"
 				onclick={() => (helpOpen = false)}
 				class="absolute top-3 right-3 rounded p-1 text-muted-foreground hover:text-foreground"
-			><X size={16} /></button>
+				><X size={16} /></button
+			>
 			<h2 class="mb-4 text-base font-semibold text-foreground">MasterSpeak Guide</h2>
 			<div class="space-y-4">
 				<div>
 					<h3 class="text-xs font-bold text-muted-foreground uppercase">Format</h3>
-					<p class="mt-1 text-sm text-foreground">Only <strong>.docx</strong> files are supported.</p>
+					<p class="mt-1 text-sm text-foreground">
+						Only <strong>.docx</strong> files are supported.
+					</p>
 				</div>
 				<div>
 					<h3 class="text-xs font-bold text-muted-foreground uppercase">How it works</h3>
 					<ul class="mt-2 space-y-2 text-sm text-muted-foreground">
-						<li class="flex gap-2"><span class="font-bold text-primary">1.</span><span>Upload your cards with <a href="https://paperlessdebate.com/verbatim/" target="_blank" class="text-accent">Verbatim</a>/standard formatting as a .docx.</span></li>
-						<li class="flex gap-2"><span class="font-bold text-primary">2.</span> Our AI engine will analyze your card structure and tags.</li>
-						<li class="flex gap-2"><span class="font-bold text-primary">3.</span> It will compile and give a polished "read-off" document.</li>
+						<li class="flex gap-2">
+							<span class="font-bold text-primary">1.</span><span
+								>Upload your cards with <a
+									href="https://paperlessdebate.com/verbatim/"
+									target="_blank"
+									class="text-accent">Verbatim</a
+								>/standard formatting as a .docx.</span
+							>
+						</li>
+						<li class="flex gap-2">
+							<span class="font-bold text-primary">2.</span> Our AI engine will analyze your card structure
+							and tags.
+						</li>
+						<li class="flex gap-2">
+							<span class="font-bold text-primary">3.</span> It will compile and give a polished "read-off"
+							document.
+						</li>
 					</ul>
 				</div>
 				<div class="rounded-lg bg-primary/5 p-4 ring-1 ring-primary/10">
-					<p class="text-xs leading-relaxed text-primary"><strong>Note:</strong> Make sure your doc only contains cards. Hats, pocket, block, etc. are not supported.</p>
+					<p class="text-xs leading-relaxed text-primary">
+						<strong>Note:</strong> Make sure your doc only contains cards. Hats, pocket, block, etc. are
+						not supported.
+					</p>
 				</div>
 			</div>
 		</div>
