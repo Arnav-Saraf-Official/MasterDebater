@@ -13,7 +13,17 @@ const config = {
 			assets: 'build',
 			fallback: 'index.html',
 			strict: true
-		})
+		}),
+		prerender: {
+			handleHttpError: ({ path, referrer, message }) => {
+				// Ignore 405 for routes that only support POST during prerendering
+				if (message.includes('405')) {
+					return;
+				}
+				// Fail for other errors
+				throw new Error(message);
+			}
+		}
 	}
 };
 

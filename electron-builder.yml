@@ -3,20 +3,39 @@ directories:
 
 files:
   - build/**/*
-  - dist-electron/main.js
-  - dist-electron/main.js.map
-  - dist-electron/server.js
-  - dist-electron/server.js.map
-  - dist-electron/preload.js
-  - dist-electron/preload.js.map
+  - dist-electron/main.cjs
+  - dist-electron/main.cjs.map
+  - dist-electron/preload.cjs
+  - dist-electron/preload.cjs.map
   - package.json
 
 win:
-  target: nsis
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+    - target: dir
+      arch:
+        - x64
   icon: static/icon.png
 
 mac:
-  target: dmg
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
+    - target: dir
+      arch:
+        - x64
+        - arm64
   icon: static/icon.icns
 
 linux:

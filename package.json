@@ -10,6 +10,8 @@
 		"build": "vite build",
 		"build:electron-main": "node electron/build.mjs",
 		"build:electron": "vite build && npm run build:electron-main && electron-builder",
+		"build:electron-exe": "vite build && npm run build:electron-main && electron-builder --win",
+		"build:apple": "vite build && npm run build:electron-main && electron-builder --mac",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
