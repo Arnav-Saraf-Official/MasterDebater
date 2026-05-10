@@ -4,7 +4,7 @@
 	import AnimateOnScroll from '$lib/components/AnimateOnScroll.svelte';
 	import { Settings, User, CreditCard, Eye, EyeOff, Moon, Sun, Accessibility, LogOut, Copy, Check } from '@lucide/svelte';
 
-	let user = $state<{ email?: string; created_at?: string } | null>(null);
+	let user = $state<{ id?: string; email?: string; created_at?: string } | null>(null);
 	let loading = $state(true);
 	let showEmail = $state(false);
 	let emailCopied = $state(false);
@@ -12,33 +12,73 @@
 	let reducedMotion = $state(false);
 	let highContrast = $state(false);
 
+	function applyClasses(t: 'light' | 'dark', rm: boolean, hc: boolean) {
+		document.documentElement.classList.toggle('light', t === 'light');
+		document.documentElement.classList.toggle('reduce-motion', rm);
+		document.documentElement.classList.toggle('high-contrast', hc);
+	}
+
+	function cacheLocally(t: 'light' | 'dark', rm: boolean, hc: boolean) {
+		localStorage.setItem('theme', t);
+		localStorage.setItem('reducedMotion', String(rm));
+		localStorage.setItem('highContrast', String(hc));
+	}
+
+	async function savePrefs(patch: { theme?: 'light' | 'dark'; reduced_motion?: boolean; high_contrast?: boolean }) {
+		if (!user?.id) return;
+		await supabase.from('user_preferences').upsert(
+			{ user_id: user.id, theme, reduced_motion: reducedMotion, high_contrast: highContrast, ...patch },
+			{ onConflict: 'user_id' }
+		);
+	}
+
 	onMount(async () => {
+		const cachedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+		const cachedRm = localStorage.getItem('reducedMotion') === 'true';
+		const cachedHc = localStorage.getItem('highContrast') === 'true';
+		if (cachedTheme) { theme = cachedTheme; reducedMotion = cachedRm; highContrast = cachedHc; }
+		applyClasses(theme, reducedMotion, highContrast);
+
 		const { data } = await supabase.auth.getUser();
 		user = data.user ?? null;
 		loading = false;
 
-		const stored = localStorage.getItem('theme');
-		if (stored === 'light' || stored === 'dark') theme = stored;
-		reducedMotion = localStorage.getItem('reducedMotion') === 'true';
-		highContrast = localStorage.getItem('highContrast') === 'true';
+		if (user?.id) {
+			const { data: prefs } = await supabase
+				.from('user_preferences')
+				.select('theme, reduced_motion, high_contrast')
+				.eq('user_id', user.id)
+				.single();
+
+			if (prefs) {
+				theme = prefs.theme;
+				reducedMotion = prefs.reduced_motion;
+				highContrast = prefs.high_contrast;
+				cacheLocally(theme, reducedMotion, highContrast);
+				applyClasses(theme, reducedMotion, highContrast);
+			}
+		}
 	});
 
-	function toggleTheme() {
+	async function toggleTheme() {
 		theme = theme === 'dark' ? 'light' : 'dark';
-		localStorage.setItem('theme', theme);
-		document.documentElement.classList.toggle('light', theme === 'light');
+		applyClasses(theme, reducedMotion, highContrast);
+		cacheLocally(theme, reducedMotion, highContrast);
+		await savePrefs({ theme });
 	}
 
-	function toggleReducedMotion() {
+	async function toggleReducedMotion() {
 		reducedMotion = !reducedMotion;
-		localStorage.setItem('reducedMotion', String(reducedMotion));
-		document.documentElement.classList.toggle('reduce-motion', reducedMotion);
+		applyClasses(theme, reducedMotion, highContrast);
+		cacheLocally(theme, reducedMotion, highContrast);
+		await savePrefs({ reduced_motion: reducedMotion });
 	}
 
-	function toggleHighContrast() {
+	async function toggleHighContrast() {
 		highContrast = !highContrast;
-		localStorage.setItem('highContrast', String(highContrast));
-		document.documentElement.classList.toggle('high-contrast', highContrast);
+		applyClasses(theme, reducedMotion, highContrast);
+		cacheLocally(theme, reducedMotion, highContrast);
+		await savePrefs({ high_contrast: highContrast });
 	}
 
 	async function copyEmail() {

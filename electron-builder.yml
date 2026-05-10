@@ -1,5 +1,7 @@
 directories:
-  output: dist-electron
+  output: release
+
+asar: false
 
 files:
   - build/**/*
