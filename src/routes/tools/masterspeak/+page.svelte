@@ -263,7 +263,7 @@
 								</li>
 								<li class="flex gap-2">
 									<span class="font-bold text-primary">2.</span>
-									Our AI engine will anaylize your card structure and tags.
+									Our AI engine will analyze your card structure and tags.
 								</li>
 								<li class="flex gap-2">
 									<span class="font-bold text-primary">3.</span>
@@ -274,7 +274,7 @@
 						<div class="rounded-lg bg-primary/5 p-4 ring-1 ring-primary/10">
 							<p class="text-xs leading-relaxed text-primary">
 								<strong>Note:</strong> Make sure your doc only contains cards. We currently do not support
-								any addional features such as hats, pocket, block, etc.
+								any additional features such as hats, pocket, block, etc.
 							</p>
 						</div>
 					</div>

@@ -100,7 +100,8 @@
 		box-shadow:
 			0 16px 40px -8px color-mix(in srgb, var(--color-primary), transparent 50%),
 			0 0 0 1px color-mix(in srgb, var(--color-primary), transparent 85%) inset;
-		transform: scale(1.02);
+		animation-play-state: paused;
+		transform: translateY(-4px) scale(1.02);
 	}
 
 	.menu-trigger {
