@@ -9,17 +9,24 @@
 		"dev:electron": "npm run build:electron-main && concurrently --kill-others \"npm run dev -- --port 5188 --host 127.0.0.1\" \"wait-on http://127.0.0.1:5188 && cross-env ELECTRON_DEV=true electron . --disable-features=AutofillServerCommunication\"",
 		"build": "vite build",
 		"build:electron-main": "node electron/build.mjs",
-		"build:electron": "vite build && npm run build:electron-main && electron-builder",
-		"build:electron-exe": "vite build && npm run build:electron-main && electron-builder --win",
-		"build:apple": "vite build && npm run build:electron-main && electron-builder --mac",
-		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"lint": "prettier --check . && eslint .",
-		"format": "prettier --write .",
-		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run"
+		"build:win": "vite build && npm run build:electron-main && electron-builder --win --publish always",
+		"build:mac": "vite build && npm run build:electron-main && electron-builder --mac",
+		"build:linux": "vite build && npm run build:electron-main && electron-builder --linux",
+		"release:prepatch": "node scripts/release.mjs prepatch",
+		"release:patch": "node scripts/release.mjs patch",
+		"release:preminor": "node scripts/release.mjs preminor",
+		"release:minor": "node scripts/release.mjs minor",
+		"release:premajor": "node scripts/release.mjs premajor",
+		"release:major": "node scripts/release.mjs major"
+	},
+	"build": {
+		"publish": [
+			{
+				"provider": "github",
+				"owner": "Arnav-Saraf-Official",
+				"repo": "MasterDebater"
+			}
+		]
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.4",
@@ -61,6 +68,8 @@
 		"@lucide/svelte": "^1.14.0",
 		"@supabase/supabase-js": "^2.105.1",
 		"docx": "^9.6.1",
+		"dotenv": "^17.4.2",
+		"electron-updater": "^6.8.3",
 		"express": "^5.0.0",
 		"keytar": "^7.9.0",
 		"officeparser": "^6.1.1",
