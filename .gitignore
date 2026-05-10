@@ -10,6 +10,7 @@ node_modules
 
 # Electron
 /dist-electron
+/release
 
 # OS
 .DS_Store
