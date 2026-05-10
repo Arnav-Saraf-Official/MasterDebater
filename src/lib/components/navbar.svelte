@@ -2,7 +2,23 @@
 	import { slide } from 'svelte/transition';
 	import { Menu, Settings, User } from '@lucide/svelte';
 	import { page } from '$app/state';
+	import { supabase } from '$lib/supabase';
+	import { onMount } from 'svelte';
+
 	let hovering = $state(false);
+	let loggedIn = $state(false);
+
+	onMount(() => {
+		supabase.auth.getSession().then(({ data }) => {
+			loggedIn = !!data.session;
+		});
+
+		const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+			loggedIn = !!session;
+		});
+
+		return () => subscription.unsubscribe();
+	});
 </script>
 
 <div class="pointer-events-none fixed top-6 right-0 left-0 z-50 flex justify-center px-4">
@@ -13,7 +29,7 @@
 		onmouseleave={() => (hovering = false)}
 	>
 		<!-- Brand & Version -->
-		<a href="/" class="flex shrink-0 items-center gap-3 px-6 py-3">
+		<a href={loggedIn ? '/tools' : '/'} class="flex shrink-0 items-center gap-3 px-6 py-3">
 			<span class="text-primary-muted font-heading text-xl font-medium tracking-wide"
 				>MasterDebater</span
 			>

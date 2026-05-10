@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
+	import { goto } from '$app/navigation';
 	import HeroSection from '$lib/components/HeroSection.svelte';
 	import { Mail, Lock, LogIn, LogOut } from '@lucide/svelte';
 
@@ -12,12 +13,14 @@
 	$effect(() => {
 		supabase.auth.getSession().then(({ data: { session: s } }) => {
 			session = s;
+			if (s) goto('/tools');
 		});
 
 		const {
 			data: { subscription }
 		} = supabase.auth.onAuthStateChange((_event, s) => {
 			session = s;
+			if (s) goto('/tools');
 		});
 
 		return () => subscription.unsubscribe();
