@@ -1,6 +1,40 @@
 <script lang="ts">
 	import AnimateOnScroll from '$lib/components/AnimateOnScroll.svelte';
 	import { Download, Monitor, Laptop, Code, Smartphone } from '@lucide/svelte';
+	let version = $state('0.0.1');
+	const REPO_URL = 'https://github.com/Arnav-Saraf-Official/MasterDebater';
+
+	$effect(() => {
+		fetch('/releases/latest.json')
+			.then((r) => r.json())
+			.then((data) => {
+				version = data.version;
+			})
+			.catch(() => {
+				console.error('Failed to fetch latest version');
+			});
+	});
+
+	const DOWNLOADS = $derived.by(() => {
+		const base = `${REPO_URL}/releases/download/v${version}`;
+		return {
+			Windows: {
+				installer: `${base}/masterdebater-setup-${version}.exe`,
+				portable: `${base}/masterdebater-${version}.exe`
+			},
+			macOS: {
+				installer: `${base}/MasterDebater-${version}.dmg`,
+				portable: `${base}/MasterDebater-${version}-mac.zip`
+			},
+			Linux: {
+				installer: `${base}/MasterDebater-${version}.AppImage`,
+				portable: `${base}/MasterDebater-${version}.AppImage`
+			},
+			Desktop: { installer: '#', portable: '#' },
+			Android: { installer: '#', portable: '#' },
+			iOS: { installer: '#', portable: '#' }
+		} as Record<string, { installer: string; portable: string }>;
+	});
 
 	let os = $state('Desktop');
 	let SelectedIcon = $derived.by(() => {
@@ -9,6 +43,8 @@
 		if (os === 'Android' || os === 'iOS') return Smartphone;
 		return Download;
 	});
+
+	let currentLinks = $derived(DOWNLOADS[os] || DOWNLOADS['Desktop']);
 
 	$effect(() => {
 		const userAgent = window.navigator.userAgent;
@@ -61,18 +97,20 @@
 					</div>
 
 					<div class="mt-12 flex flex-col gap-4">
-						<button
+						<a
+							href={currentLinks.installer}
 							class="press-feedback flex w-full items-center justify-center gap-3 rounded-2xl bg-primary px-8 py-5 font-semibold text-on-primary transition-all hover:scale-[1.02] active:scale-[0.98]"
 						>
-							<Download size={20} /> Download v0.1.0 Installer
-						</button>
-						<button
+							<Download size={20} /> Download v{version} Installer
+						</a>
+						<a
+							href={currentLinks.portable}
 							class="press-feedback flex w-full items-center justify-center gap-3 rounded-2xl border-3 border-foreground px-8 py-5 font-semibold text-primary transition-all hover:scale-[1.02] active:scale-[0.98]"
 						>
-							<Download size={20} /> Download v0.1.0 Portable
-						</button>
+							<Download size={20} /> Download v{version} Portable
+						</a>
 						<p class="text-center text-xs text-muted-foreground">
-							.exe, .dmg, or .deb based on your OS
+							.exe, .dmg, or .AppImage based on your OS
 						</p>
 					</div>
 				</div>
@@ -85,32 +123,42 @@
 					<h4 class="font-heading text-xl font-medium text-foreground">Other Platforms</h4>
 					<div class="grid grid-cols-2 gap-4">
 						<button
+							onclick={() => (os = 'Windows')}
 							class="flex items-center gap-3 rounded-xl bg-card px-4 py-3 text-sm font-medium text-foreground ring-1 ring-border hover:bg-cream-200"
+							class:ring-primary={os === 'Windows'}
 						>
 							<Monitor size={16} /> Windows
 						</button>
 						<button
+							onclick={() => (os = 'macOS')}
 							class="flex items-center gap-3 rounded-xl bg-card px-4 py-3 text-sm font-medium text-foreground ring-1 ring-border hover:bg-cream-200"
+							class:ring-primary={os === 'macOS'}
 						>
 							<Laptop size={16} /> macOS
 						</button>
 						<button
+							onclick={() => (os = 'Linux')}
 							class="flex items-center gap-3 rounded-xl bg-card px-4 py-3 text-sm font-medium text-foreground ring-1 ring-border hover:bg-cream-200"
+							class:ring-primary={os === 'Linux'}
 						>
 							<Monitor size={16} /> Linux
 						</button>
-						<button
+						<a
+							href={REPO_URL}
+							target="_blank"
 							class="flex items-center gap-3 rounded-xl bg-card px-4 py-3 text-sm font-medium text-foreground ring-1 ring-border hover:bg-cream-200"
 						>
 							<Code size={16} /> Raw Source
-						</button>
+						</a>
 					</div>
 					<p class="text-sm text-muted-foreground">
 						Mobile versions are not in development. Check back later.
 					</p>
 					<p class="text-sm text-muted-foreground">
-						View the lisence and terms for raw source usage <a
-							href="https://github.com/Arnav-Saraf-Official/MasterDebater"><u>here</u></a
+						View the license and terms for raw source usage <a
+							href={REPO_URL}
+							target="_blank"
+							class="underline">here</a
 						>.
 					</p>
 				</div>
