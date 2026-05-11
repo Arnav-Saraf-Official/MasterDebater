@@ -22,10 +22,8 @@ function runSilent(cmd) {
 try {
 	console.log('\n🔍 Checking git state...\n');
 
-	// 1. Ensure we're in a git repo
 	run('git rev-parse --is-inside-work-tree');
 
-	// 2. Ensure clean working tree
 	const status = runSilent('git status --porcelain');
 
 	if (status.length > 0) {
@@ -33,7 +31,6 @@ try {
 		process.exit(1);
 	}
 
-	// 3. Ensure no ongoing merge/rebase
 	try {
 		runSilent('git rev-parse --git-path REBASE_HEAD');
 	} catch {}
@@ -69,7 +66,7 @@ try {
 	run('git checkout web');
 
 	// update latest.json (adjust path if needed)
-	const jsonPath = './releases/latest.json';
+	const jsonPath = './static/releases/latest.json';
 
 	const data = {
 		version,
