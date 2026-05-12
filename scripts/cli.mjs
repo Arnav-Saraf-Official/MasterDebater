@@ -43,6 +43,26 @@ async function pick(rl, question, choices) {
 	}
 }
 
+// returns [{tag, version, label}] sorted newest first
+function listTags() {
+	const raw = runSilent('git tag -l --sort=-version:refname');
+	if (!raw) return [];
+	return raw.split('\n').map((tag) => {
+		const date = runSilent(`git log -1 --format=%ci ${tag}`).slice(0, 10);
+		const subject = runSilent(`git log -1 --format=%s ${tag}`);
+		const version = tag.replace(/^v/, '');
+		return { tag, version, label: `${tag}  ${c.gray}${date}  ${subject}${c.reset}` };
+	});
+}
+
+async function pickTag(rl, question) {
+	const tags = listTags();
+	if (!tags.length) throw new Error('no git tags found');
+	return pick(rl, question, tags.map((t) => t.label)).then((label) => {
+		return tags.find((t) => t.label === label);
+	});
+}
+
 async function deleteGitHubRelease(version, token) {
 	const tag = `v${version}`;
 	const headers = {
@@ -66,17 +86,21 @@ async function deleteGitHubRelease(version, token) {
 	}
 }
 
-// --- Parse args ---
-// Usage: npm run release -- [platform] [bump-type | overwrite]
+// --- parse args ---
+// usage: npm run release -- [platform] [bump-type | overwrite | append] [tag]
 // e.g.   npm run release -- mac beta
 //        npm run release -- win patch
 //        npm run release -- mac overwrite
+//        npm run release -- mac overwrite v0.0.5
+//        npm run release -- mac append v0.0.6-beta.3
 
 const args = process.argv.slice(2);
 let argPlatform = args.find((a) => PLATFORMS.includes(a));
 let argBump = args.find((a) => BUMP_TYPES.includes(a));
 let argOverwrite = args.includes('overwrite');
-const interactive = !argPlatform && !argBump && !argOverwrite;
+let argAppend = args.includes('append');
+let argTag = args.find((a) => a.startsWith('v'));
+const interactive = !argPlatform && !argBump && !argOverwrite && !argAppend;
 
 const rl = readline.createInterface({ input, output });
 
@@ -102,50 +126,75 @@ try {
 	const platform = argPlatform ?? (await pick(rl, 'target platform?', PLATFORMS));
 
 	let version;
+	let mode; // 'bump' | 'overwrite' | 'append'
 
-	if (argOverwrite || (!argBump && !interactive && !argOverwrite)) {
-		version = pkg.version;
-	} else if (!argBump) {
+	if (argOverwrite) {
+		mode = 'overwrite';
+	} else if (argAppend) {
+		mode = 'append';
+	} else if (argBump) {
+		mode = 'bump';
+	} else {
+		// fully interactive
 		const modeChoice = await pick(rl, 'what do you want to do?', [
 			'bump & release',
-			'overwrite current version'
+			'overwrite existing release',
+			'append to existing release'
 		]);
-		if (modeChoice === 'overwrite current version') {
-			version = pkg.version;
-		} else {
-			const bumpChoice = await pick(rl, 'version bump type?', BUMP_TYPES);
-			argBump = bumpChoice;
-		}
+		mode =
+			modeChoice === 'bump & release'
+				? 'bump'
+				: modeChoice === 'overwrite existing release'
+					? 'overwrite'
+					: 'append';
 	}
 
-	if (argBump) {
-		const versionArg = BUMP_MAP[argBump] ?? argBump;
+	if (mode === 'bump') {
+		const bump = argBump ?? (await pick(rl, 'version bump type?', BUMP_TYPES));
+		const versionArg = BUMP_MAP[bump] ?? bump;
 		info('\nbumping version...');
 		run(`npm version ${versionArg}`);
 		const bumped = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
 		version = bumped.version;
-	}
-
-	if (!argBump || argOverwrite) {
-		const tag = `v${version}`;
-		info(`\noverwriting ${tag} on ${platform}...`);
-		try {
-			runSilent(`git tag -d ${tag}`);
-			info(`deleted local tag ${tag}`);
-		} catch {
-			warn(`local tag ${tag} not found, skipping`);
+	} else {
+		// overwrite or append — pick a tag
+		let chosen;
+		if (argTag) {
+			const tags = listTags();
+			chosen = tags.find((t) => t.tag === argTag || t.tag === `v${argTag}`);
+			if (!chosen) throw new Error(`tag ${argTag} not found`);
+		} else {
+			chosen = await pickTag(rl, `which release to ${mode}?`);
 		}
-		try {
-			runSilent(`git push origin :refs/tags/${tag}`);
-			info(`deleted remote tag ${tag}`);
-		} catch {
-			warn(`remote tag ${tag} not found, skipping`);
+		version = chosen.version;
+
+		if (mode === 'overwrite') {
+			info(`\noverwriting ${chosen.tag} on ${platform}...`);
+			try {
+				runSilent(`git tag -d ${chosen.tag}`);
+				info(`deleted local tag ${chosen.tag}`);
+			} catch {
+				warn(`local tag ${chosen.tag} not found, skipping`);
+			}
+			try {
+				runSilent(`git push origin :refs/tags/${chosen.tag}`);
+				info(`deleted remote tag ${chosen.tag}`);
+			} catch {
+				warn(`remote tag ${chosen.tag} not found, skipping`);
+			}
+			await deleteGitHubRelease(version, process.env.GH_TOKEN);
+		} else {
+			info(`\nappending to ${chosen.tag} on ${platform}...`);
 		}
 	}
 
 	rl.close();
 
-	await deleteGitHubRelease(version, process.env.GH_TOKEN);
+	if (mode !== 'append') {
+		// for bump and overwrite, deleteGitHubRelease already called above for overwrite;
+		// for bump we still want to clear any pre-existing release for the new version
+		if (mode === 'bump') await deleteGitHubRelease(version, process.env.GH_TOKEN);
+	}
 
 	info(`\nbuilding ${platform} release v${version}...`);
 	run(`cross-env GH_TOKEN=${process.env.GH_TOKEN} npm run build:${platform}-release`);
