@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { resolve as dnsResolve } from 'dns/promises';
 
 const WORKER_URL = 'https://manager.masterdebaterapp.workers.dev';
 
@@ -111,7 +112,23 @@ function getSystemPrompt(): Promise<string> {
 	return systemPromptCache;
 }
 
+const PRIVATE_IP_RE =
+	/^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|::1$|fc|fd)/i;
+
 async function fetchFromUrl(url: string): Promise<string> {
+	let parsed: URL;
+	try {
+		parsed = new URL(url);
+	} catch {
+		throw new Error('Invalid URL');
+	}
+	if (parsed.protocol !== 'https:') throw new Error('Only HTTPS URLs are allowed');
+	const addresses = await dnsResolve(parsed.hostname).catch(() => {
+		throw new Error('Failed to resolve hostname');
+	});
+	for (const addr of addresses) {
+		if (PRIVATE_IP_RE.test(addr)) throw new Error('URL resolves to a private address');
+	}
 	const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
 	if (!response.ok) {
 		throw new Error(`Failed to fetch from URL: ${response.statusText}`);
