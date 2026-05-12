@@ -153,16 +153,6 @@ export async function _generateCardQuery(
 				} else {
 					evidence = await evidence_source.text();
 				}
-			} else if (typeof evidence_source === 'string') {
-				const ext = path.extname(evidence_source).toLowerCase();
-				if (ext === '.pdf') {
-					const pdf = (await import('pdf-parse')) as any;
-					const dataBuffer = await readFile(evidence_source);
-					const data = await pdf(dataBuffer);
-					evidence = data.text;
-				} else {
-					evidence = await readFile(evidence_source, 'utf-8');
-				}
 			}
 			break;
 		}
