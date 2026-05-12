@@ -21,9 +21,11 @@
 		"release:preminor": "node scripts/release.mjs preminor",
 		"release:minor": "node scripts/release.mjs minor",
 		"release:premajor": "node scripts/release.mjs premajor",
-		"release:major": "node scripts/release.mjs major"
+		"release:major": "node scripts/release.mjs major",
+		"postinstall": "electron-rebuild -f -w keytar"
 	},
 	"devDependencies": {
+		"@electron/rebuild": "^4.0.4",
 		"@eslint/compat": "^2.0.4",
 		"@eslint/js": "^10.0.1",
 		"@sveltejs/adapter-auto": "^7.0.1",

@@ -8,12 +8,12 @@
 	let loading = $state(true);
 	let showEmail = $state(false);
 	let emailCopied = $state(false);
-	let theme = $state<'light' | 'dark'>('dark');
+	let theme = $state<'light' | 'dark'>('light');
 	let reducedMotion = $state(false);
 	let highContrast = $state(false);
 
 	function applyClasses(t: 'light' | 'dark', rm: boolean, hc: boolean) {
-		document.documentElement.classList.toggle('light', t === 'light');
+		document.documentElement.classList.toggle('dark', t === 'dark');
 		document.documentElement.classList.toggle('reduce-motion', rm);
 		document.documentElement.classList.toggle('high-contrast', hc);
 	}

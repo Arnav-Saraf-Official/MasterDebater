@@ -1,7 +1,7 @@
 <script lang="ts">
 	import AnimateOnScroll from '$lib/components/AnimateOnScroll.svelte';
 	import FeatureCard from '$lib/components/FeatureCard.svelte';
-	import { FileText, Info } from '@lucide/svelte';
+	import { FileText, Mic, Info } from '@lucide/svelte';
 
 	const tools = [
 		{
@@ -10,6 +10,13 @@
 				'Tired of cutting and finding content for cards? Let AI do all the heavy lifting so you can focus on what matters more.',
 			href: '/tools/mastercard',
 			icon: FileText
+		},
+		{
+			name: 'MasterSpeak',
+			description:
+				'Upload your speech doc and get a polished read-off in seconds. Cards compiled, warrants intact.',
+			href: '/tools/masterspeak',
+			icon: Mic
 		}
 	];
 </script>

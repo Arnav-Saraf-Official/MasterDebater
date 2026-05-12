@@ -260,6 +260,27 @@
 	}
 }
 
+/* dark theme */
+html.dark {
+	--color-primary: #e8a84c;
+	--color-on-primary: #1a1208;
+	--color-secondary: #a89070;
+	--color-accent: #c28f58;
+	--color-background: #18120a;
+	--color-background-2: #211809;
+	--color-foreground: #f0e6d0;
+	--color-card: #231a0d;
+	--color-card-foreground: #e8d5b0;
+	--color-muted: #2a1f12;
+	--color-muted-foreground: #8a7a62;
+	--color-border: #2e2114;
+	--color-destructive: #f87171;
+	--color-ring: #6b5a40;
+
+	background-color: var(--color-background);
+	color: var(--color-foreground);
+}
+
 /* a11y */
 @media (prefers-reduced-motion: reduce) {
 	*,
