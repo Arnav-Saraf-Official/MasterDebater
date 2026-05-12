@@ -61,7 +61,9 @@
 	"dependencies": {
 		"@lucide/svelte": "^1.14.0",
 		"@supabase/supabase-js": "^2.105.1",
+		"@types/dompurify": "^3.0.5",
 		"docx": "^9.6.1",
+		"dompurify": "^3.4.2",
 		"dotenv": "^17.4.2",
 		"electron-updater": "^6.8.3",
 		"express": "^5.0.0",

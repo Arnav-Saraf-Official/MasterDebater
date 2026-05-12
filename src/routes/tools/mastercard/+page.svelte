@@ -19,6 +19,7 @@
 	let helpOpen = $state(false);
 	import { supabase } from '$lib/supabase';
 	import { browser } from '$app/environment';
+	import DOMPurify from 'dompurify';
 
 	const WELCOME =
 		'Welcome to MasterCard! Provide your case argument and source material (text, link, or file) and I will cut a structured debate card for you.';
@@ -745,7 +746,7 @@
 									? 'text-sm leading-relaxed whitespace-pre-wrap text-on-primary/90'
 									: 'card-display text-foreground'}"
 							>
-								{@html renderDisplay(message.content)}
+								{@html DOMPurify.sanitize(renderDisplay(message.content), { ALLOWED_TAGS: ['strong','span','mark','div','br'], ALLOWED_ATTR: ['class','style'] })}
 							</div>
 							{#if message.canRetry}
 								<button

@@ -2,6 +2,7 @@
 	import { Send, UploadCloud, FileText, Trash2, Mic, Settings, Copy } from '@lucide/svelte';
 	import { browser } from '$app/environment';
 	import { processMasterSpeakDoc } from '$lib/masterspeak';
+	import DOMPurify from 'dompurify';
 
 	const WELCOME = 'Welcome to MasterSpeak! Upload a .docx file with your cards to get started.';
 
@@ -163,7 +164,7 @@
 									? 'text-sm leading-relaxed whitespace-pre-wrap text-on-primary/90'
 									: 'text-sm leading-relaxed text-foreground'}
 							>
-								{@html renderDisplay(message.content)}
+								{@html DOMPurify.sanitize(renderDisplay(message.content), { ALLOWED_TAGS: ['strong','span','mark','div','br'], ALLOWED_ATTR: ['class','style'] })}
 							</div>
 							{#if message.timestamp}
 								<div
