@@ -2,6 +2,13 @@ import 'dotenv/config';
 import { execSync } from 'child_process';
 import fs from 'fs';
 
+const platform = process.argv[2] ?? 'win';
+
+if (!['win', 'mac', 'linux'].includes(platform)) {
+	console.error('Invalid platform. Use: win | mac | linux');
+	process.exit(1);
+}
+
 const GH_OWNER = 'Arnav-Saraf-Official';
 const GH_REPO = 'MasterDebater';
 
@@ -31,10 +38,10 @@ async function deleteGitHubRelease(version, token) {
 
 	if (existing) {
 		console.log(`\n🗑  Deleting existing GitHub release for ${tag}...\n`);
-		await fetch(
-			`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/releases/${existing.id}`,
-			{ method: 'DELETE', headers }
-		);
+		await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/releases/${existing.id}`, {
+			method: 'DELETE',
+			headers
+		});
 	}
 }
 
@@ -67,7 +74,6 @@ try {
 
 	console.log(`\n🔁 Overwriting release for ${tag} (no version bump)...\n`);
 
-	// Delete local git tag so electron-builder can recreate it
 	try {
 		runSilent(`git tag -d ${tag}`);
 		console.log(`\n🏷  Deleted local git tag ${tag}\n`);
@@ -75,7 +81,6 @@ try {
 		console.log(`\n⚠  Local tag ${tag} not found, skipping delete\n`);
 	}
 
-	// Delete remote git tag
 	try {
 		runSilent(`git push origin :refs/tags/${tag}`);
 		console.log(`\n🏷  Deleted remote git tag ${tag}\n`);
@@ -85,9 +90,9 @@ try {
 
 	await deleteGitHubRelease(version, process.env.GH_TOKEN);
 
-	console.log(`\n🚀 Building Windows release v${version}...\n`);
+	console.log(`\n🚀 Building ${platform} release v${version}...\n`);
 
-	run(`cross-env GH_TOKEN=${process.env.GH_TOKEN} npm run build:win-release`);
+	run(`cross-env GH_TOKEN=${process.env.GH_TOKEN} npm run build:${platform}-release`);
 
 	console.log('\n🌐 Updating web branch...\n');
 

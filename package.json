@@ -15,14 +15,7 @@
 		"build:win": "vite build && npm run build:electron-main && electron-builder --win",
 		"build:mac": "vite build && npm run build:electron-main && electron-builder --mac",
 		"build:linux": "vite build && npm run build:electron-main && electron-builder --linux",
-		"release:beta": "node scripts/release.mjs prerelease",
-		"release:prepatch": "node scripts/release.mjs prepatch",
-		"release:patch": "node scripts/release.mjs patch",
-		"release:preminor": "node scripts/release.mjs preminor",
-		"release:minor": "node scripts/release.mjs minor",
-		"release:premajor": "node scripts/release.mjs premajor",
-		"release:major": "node scripts/release.mjs major",
-		"release:overwrite": "node scripts/overwrite.mjs",
+		"release": "node scripts/cli.mjs",
 		"postinstall": "electron-rebuild -f -w keytar"
 	},
 	"devDependencies": {

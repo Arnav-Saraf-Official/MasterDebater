@@ -3,9 +3,15 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 
 const type = process.argv[2];
+const platform = process.argv[3] ?? 'win';
 
 if (!type) {
 	console.error('Missing version type (patch | minor | major)');
+	process.exit(1);
+}
+
+if (!['win', 'mac', 'linux'].includes(platform)) {
+	console.error('Invalid platform. Use: win | mac | linux');
 	process.exit(1);
 }
 
@@ -81,9 +87,9 @@ try {
 	// Delete any existing GitHub release so electron-builder can publish cleanly
 	await deleteGitHubRelease(version, process.env.GH_TOKEN);
 
-	console.log(`\n🚀 Building Windows release v${version}...\n`);
+	console.log(`\n🚀 Building ${platform} release v${version}...\n`);
 
-	run(`cross-env GH_TOKEN=${process.env.GH_TOKEN} npm run build:win-release`);
+	run(`cross-env GH_TOKEN=${process.env.GH_TOKEN} npm run build:${platform}-release`);
 
 	console.log('\n🌐 Updating web branch...\n');
 
