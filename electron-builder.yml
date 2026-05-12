@@ -24,6 +24,7 @@ win:
   icon: static/icon.png
 
 mac:
+  identity: null
   hardenedRuntime: false
   gatekeeperAssess: false
   target:
