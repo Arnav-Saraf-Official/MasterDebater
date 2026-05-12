@@ -11,6 +11,16 @@ export const POST = async ({ request }) => {
 
 	const accessToken = authHeader.replace('Bearer ', '');
 
+	const userRes = await fetch('https://njvfstduswdwdmyntzow.supabase.co/auth/v1/user', {
+		headers: {
+			Authorization: `Bearer ${accessToken}`,
+			apikey: 'sb_publishable_25apIwJcdMrnMkTqOcZEjg_3NWawQuS'
+		}
+	});
+	if (!userRes.ok) {
+		return json({ error: 'Invalid or expired session' }, { status: 401 });
+	}
+
 	const formData = await request.formData();
 	const api_key = formData.get('api_key') as string;
 	if (!api_key) {

@@ -90,6 +90,7 @@
 
 	async function signOut() {
 		await supabase.auth.signOut();
+		localStorage.removeItem('masterdebater_api_key');
 		window.location.href = '/login';
 	}
 

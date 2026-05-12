@@ -2,123 +2,80 @@
 	import { supabase } from '$lib/supabase';
 	import { goto } from '$app/navigation';
 	import HeroSection from '$lib/components/HeroSection.svelte';
-	import { Mail, Lock, LogIn, LogOut } from '@lucide/svelte';
+	import { Mail, Lock, UserPlus } from '@lucide/svelte';
 
 	let email = $state('');
 	let password = $state('');
+	let confirm = $state('');
 	let loading = $state(false);
 	let message = $state({ type: '', text: '' });
-	let session = $state<any>(null);
 
 	$effect(() => {
 		supabase.auth.getSession().then(({ data: { session: s } }) => {
-			session = s;
 			if (s) goto('/tools');
 		});
 
 		const {
 			data: { subscription }
 		} = supabase.auth.onAuthStateChange((_event, s) => {
-			session = s;
 			if (s) goto('/tools');
 		});
 
 		return () => subscription.unsubscribe();
 	});
 
-	// -----------------------------
-	// EMAIL LOGIN (CLEANED UP)
-	// -----------------------------
-	async function handleLogin(e: Event) {
+	async function handleSignup(e: Event) {
 		e.preventDefault();
-		loading = true;
 		message = { type: '', text: '' };
 
-		try {
-			const { data: signInData, error } = await supabase.auth.signInWithPassword({
-				email,
-				password
-			});
+		if (password !== confirm) {
+			message = { type: 'error', text: 'Passwords do not match.' };
+			return;
+		}
 
+		loading = true;
+		try {
+			const { error } = await supabase.auth.signUp({ email, password });
 			if (error) {
-				message = { type: 'error', text: 'Invalid email or password.' };
+				message = { type: 'error', text: error.message };
 			} else {
-				if (signInData?.session) {
-					const res = await fetch('/', {
-						method: 'POST',
-						headers: { Authorization: `Bearer ${signInData.session.access_token}` }
-					});
-					if (res.ok) {
-						const data = await res.json();
-						if (data.api_key) localStorage.setItem('masterdebater_api_key', data.api_key);
-					} else {
-						const errData = await res.json();
-						console.error('[Auth] API key generation failed:', errData.error);
-					}
-				}
-				message = { type: 'success', text: 'Logged in successfully!' };
-				window.location.href = '/tools';
+				message = {
+					type: 'success',
+					text: 'Account created! Check your email to confirm, then sign in.'
+				};
 			}
 		} finally {
 			loading = false;
 		}
 	}
 
-	async function loginWithGoogle() {
+	async function signupWithGoogle() {
 		message = { type: '', text: '' };
-
 		const { error } = await supabase.auth.signInWithOAuth({
 			provider: 'google',
-			options: {
-				// IMPORTANT FOR ELECTRON / DESKTOP APPS
-				redirectTo: 'masterdebater://callback'
-			}
+			options: { redirectTo: 'masterdebater://callback' }
 		});
-
-		if (error) {
-			message = { type: 'error', text: error.message };
-		}
-	}
-
-	async function handleLogout() {
-		const { error } = await supabase.auth.signOut();
-		localStorage.removeItem('masterdebater_api_key');
-		if (error) {
-			message = { type: 'error', text: error.message };
-		} else {
-			message = { type: 'success', text: 'Logged out successfully.' };
-		}
+		if (error) message = { type: 'error', text: error.message };
 	}
 </script>
 
 <svelte:head>
-	<title>Login | MasterDebater</title>
+	<title>Sign Up | MasterDebater</title>
 </svelte:head>
 
 <div class="relative grid min-h-[calc(100vh-120px)] w-full grid-cols-1 lg:grid-cols-2">
-	{#if session}
-		<div class="stagger-1 absolute top-8 right-8 z-10 animate-fade-in">
-			<button
-				onclick={handleLogout}
-				class="press-feedback flex items-center gap-2 rounded-xl bg-background/80 px-4 py-2 text-sm font-semibold text-foreground shadow-sm ring-1 ring-border backdrop-blur-sm transition-all hover:bg-cream-200"
-			>
-				<LogOut size={16} class="text-primary" />
-				Logout
-			</button>
-		</div>
-	{/if}
 	<!-- Left Side: Hero Section -->
 	<div class="hidden flex-col justify-center border-r border-border bg-background lg:flex">
 		<HeroSection />
 	</div>
 
-	<!-- Right Side: Login Form -->
+	<!-- Right Side: Signup Form -->
 	<div class="flex flex-col items-center justify-center bg-card px-6 py-12 sm:px-12">
 		<div class="stagger-1 w-full max-w-md animate-fade-in-up">
 			<div class="mb-8 text-center lg:text-left">
-				<h2 class="font-heading text-4xl font-medium text-foreground">Welcome Back</h2>
+				<h2 class="font-heading text-4xl font-medium text-foreground">Create Account</h2>
 				<p class="mt-2 text-sm text-muted-foreground">
-					No account? <a href="/signup" class="text-primary hover:underline">Sign up</a>
+					Already have an account? <a href="/login" class="text-primary hover:underline">Sign in</a>
 				</p>
 			</div>
 
@@ -132,7 +89,7 @@
 				</div>
 			{/if}
 
-			<form onsubmit={handleLogin} class="space-y-4">
+			<form onsubmit={handleSignup} class="space-y-4">
 				<div>
 					<label for="email" class="mb-1.5 block text-sm font-medium text-foreground">Email</label>
 					<div class="relative">
@@ -173,13 +130,34 @@
 					</div>
 				</div>
 
+				<div>
+					<label for="confirm" class="mb-1.5 block text-sm font-medium text-foreground"
+						>Confirm Password</label
+					>
+					<div class="relative">
+						<div
+							class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground"
+						>
+							<Lock size={16} />
+						</div>
+						<input
+							type="password"
+							id="confirm"
+							bind:value={confirm}
+							required
+							placeholder="••••••••"
+							class="press-feedback w-full rounded-lg bg-background py-2.5 pr-4 pl-10 text-sm text-foreground ring-1 ring-border transition-all placeholder:text-muted-foreground/60 hover:bg-cream-200 focus:ring-2 focus:ring-primary/30 focus:outline-none"
+						/>
+					</div>
+				</div>
+
 				<button
 					type="submit"
 					disabled={loading}
 					class="press-feedback mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary shadow-md transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
 				>
-					<LogIn size={16} />
-					{loading ? 'Authenticating...' : 'Sign In'}
+					<UserPlus size={16} />
+					{loading ? 'Creating Account...' : 'Create Account'}
 				</button>
 			</form>
 
@@ -194,7 +172,7 @@
 
 			<button
 				type="button"
-				onclick={loginWithGoogle}
+				onclick={signupWithGoogle}
 				class="press-feedback flex w-full items-center justify-center gap-3 rounded-lg bg-background px-4 py-2.5 text-sm font-medium text-foreground ring-1 ring-border transition-all hover:bg-cream-200"
 			>
 				<svg class="h-5 w-5" viewBox="0 0 24 24">
