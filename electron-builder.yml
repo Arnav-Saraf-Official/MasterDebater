@@ -24,6 +24,8 @@ win:
   icon: static/icon.png
 
 mac:
+  hardenedRuntime: false
+  gatekeeperAssess: false
   target:
     - target: dmg
       arch:
