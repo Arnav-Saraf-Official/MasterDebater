@@ -45,14 +45,14 @@
 			<div class="mt-8 flex flex-wrap gap-4">
 				<a
 					href="/#features"
-					class="press-feedback inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-medium text-on-primary transition-colors hover:bg-primary/90"
+					class="press-feedback inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-medium text-on-primary hover:bg-primary/90 hover:shadow-md hover:shadow-primary/20"
 				>
 					Explore Features
 				</a>
 				{#if page.url.pathname !== '/login'}
 					<a
 						href="/login"
-						class="press-feedback inline-flex items-center rounded-lg bg-primary px-6 py-3 text-sm font-medium text-on-primary transition-colors hover:bg-primary/90"
+						class="press-feedback inline-flex items-center rounded-lg px-6 py-3 text-sm font-medium text-primary ring-1 ring-primary/40 hover:bg-primary/10 hover:ring-primary/60"
 					>
 						Login
 					</a>

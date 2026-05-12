@@ -118,7 +118,7 @@
 	--color-card-foreground: #583f0bff;
 	--color-muted: #f6f6f6;
 	--color-muted-foreground: #8b8164ff;
-	--color-border: #eeeded;
+	--color-border: #e0cda8;
 	--color-destructive: #dc2626;
 	--color-ring: #78716c;
 
@@ -132,7 +132,7 @@
 	--color-amber-warm: #d97706;
 	--color-amber-warm-light: #f59e0b;
 
-	--spacing-section: 1rem;
+	--spacing-section: 5rem;
 
 	--animate-duration-fast: 50ms;
 	--animate-duration-normal: 150ms;
@@ -218,6 +218,10 @@
 		border: none;
 		border-radius: 9999px;
 	}
+
+	:is(input, select, textarea):focus {
+		--tw-ring-color: color-mix(in srgb, var(--color-primary) 50%, transparent);
+	}
 }
 
 /* anim util */
@@ -243,10 +247,17 @@
 	}
 
 	.press-feedback {
-		transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+		transition:
+			transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+			background-color 0.18s ease,
+			box-shadow 0.18s ease,
+			color 0.18s ease,
+			opacity 0.18s ease,
+			border-color 0.18s ease;
 	}
 	.press-feedback:active {
-		transform: scale(0.97);
+		transform: scale(0.96);
+		transition: transform 0.06s ease;
 	}
 
 	.hover-lift {
@@ -262,6 +273,7 @@
 
 /* dark theme */
 html.dark {
+	color-scheme: dark;
 	--color-primary: #e8a84c;
 	--color-on-primary: #1a1208;
 	--color-secondary: #a89070;
@@ -273,9 +285,10 @@ html.dark {
 	--color-card-foreground: #e8d5b0;
 	--color-muted: #2a1f12;
 	--color-muted-foreground: #8a7a62;
-	--color-border: #2e2114;
+	--color-border: #3a2a18;
 	--color-destructive: #f87171;
 	--color-ring: #6b5a40;
+	--color-cream-200: #2a1f10;
 
 	background-color: var(--color-background);
 	color: var(--color-foreground);

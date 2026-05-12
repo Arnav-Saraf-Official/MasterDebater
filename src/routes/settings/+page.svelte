@@ -277,7 +277,7 @@
 							<button
 								onclick={toggleTheme}
 								class="theme-pill press-feedback"
-								aria-pressed={theme === 'light'}
+								aria-pressed={theme === 'dark'}
 								aria-label="Toggle theme"
 							>
 								<span class="theme-pill-track" class:active={theme === 'dark'}>
