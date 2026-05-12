@@ -417,82 +417,107 @@
 		}
 	}
 
-	async function retrySubmit() {
-		if (!lastSubmit) return;
-		// rm the error message
-		messages = messages.slice(0, -1);
-		isProcessing = true;
-
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-		if (!session) {
-			messages = [...messages, { role: 'assistant', content: 'You must be logged in.' }];
-			isProcessing = false;
-			return;
-		}
-
+	async function getApiKey(accessToken: string): Promise<string | null> {
 		let apiKey = localStorage.getItem('masterdebater_api_key');
 		if (!apiKey) {
 			const keyRes = await fetch('/', {
 				method: 'POST',
-				headers: { Authorization: `Bearer ${session.access_token}` }
+				headers: { Authorization: `Bearer ${accessToken}` }
 			});
 			if (keyRes.ok) {
 				const d = await keyRes.json();
-				apiKey = d.api_key;
+				apiKey = d.api_key ?? null;
 				if (apiKey) localStorage.setItem('masterdebater_api_key', apiKey);
+			} else {
+				const errData = await keyRes.json().catch(() => ({ error: 'unknown error' }));
+				console.error('[MasterCard] Key fetch failed:', keyRes.status, errData.error);
 			}
 		}
-		if (!apiKey) {
-			messages = [
-				...messages,
-				{ role: 'assistant', content: 'Failed to obtain API key.', canRetry: true }
-			];
-			isProcessing = false;
-			return;
-		}
+		return apiKey;
+	}
 
-		const p = lastSubmit;
-		const formData = new FormData();
-		formData.append('api_key', apiKey);
-		formData.append('model', p.model);
-		formData.append('side', p.side);
-		formData.append('caseArgument', p.caseArg);
-		formData.append('offcaseArgument', p.offcaseArg);
-		formData.append('cardArgument', p.cardArg);
-		formData.append('citation', p.citation);
-		formData.append('inputMode', p.inputMode);
-		if (p.inputMode === 'text') formData.append('textContent', p.textContent);
-		if (p.inputMode === 'link') formData.append('linkContent', p.linkContent);
-		if (p.inputMode === 'file' && p.fileContent) formData.append('fileContent', p.fileContent);
+	function buildFormData(p: SubmitPayload, apiKey: string): FormData {
+		const fd = new FormData();
+		fd.append('api_key', apiKey);
+		fd.append('model', p.model);
+		fd.append('side', p.side);
+		fd.append('caseArgument', p.caseArg);
+		fd.append('offcaseArgument', p.offcaseArg);
+		fd.append('cardArgument', p.cardArg);
+		fd.append('citation', p.citation);
+		fd.append('inputMode', p.inputMode);
+		if (p.inputMode === 'text') fd.append('textContent', p.textContent);
+		if (p.inputMode === 'link') fd.append('linkContent', p.linkContent);
+		if (p.inputMode === 'file' && p.fileContent) fd.append('fileContent', p.fileContent);
+		return fd;
+	}
 
+	// stream=true: seeds an empty bubble then animates content in.
+	// stream=false: appends full content at once (retry — no re-animation).
+	async function runCardRequest(payload: SubmitPayload, stream: boolean): Promise<void> {
+		isProcessing = true;
 		try {
+			const {
+				data: { session }
+			} = await supabase.auth.getSession();
+			if (!session) {
+				messages = [...messages, { role: 'assistant', content: 'You must be logged in.' }];
+				return;
+			}
+
+			const apiKey = await getApiKey(session.access_token);
+			if (!apiKey) {
+				messages = [
+					...messages,
+					{
+						role: 'assistant',
+						content: 'Failed to obtain an API key. Please log out and log back in.',
+						canRetry: true
+					}
+				];
+				return;
+			}
+
 			const res = await fetch('/tools/mastercard', {
 				method: 'POST',
 				headers: { Authorization: `Bearer ${session.access_token}` },
-				body: formData
+				body: buildFormData(payload, apiKey)
 			});
 			if (!res.ok) {
 				const err = await res.json();
 				throw new Error(err.error || 'Failed to generate card');
 			}
+
 			const result = await res.json();
 			const content = result.choices?.[0]?.message?.content || 'No response from AI.';
+
+			if (stream) {
+				messages = [
+					...messages,
+					{ role: 'assistant', content: '', timestamp: Date.now(), modelName: payload.model }
+				];
+				isProcessing = false;
+				streamIntoLast(content);
+			} else {
+				messages = [
+					...messages,
+					{ role: 'assistant', content, timestamp: Date.now(), modelName: payload.model }
+				];
+			}
+		} catch (e: unknown) {
 			messages = [
 				...messages,
-				{ role: 'assistant', content, timestamp: Date.now(), modelName: p.model }
-			];
-			isProcessing = false;
-			return;
-		} catch (e: any) {
-			messages = [
-				...messages,
-				{ role: 'assistant', content: `Error: ${e.message}`, canRetry: true }
+				{ role: 'assistant', content: `Error: ${(e as Error).message}`, canRetry: true }
 			];
 		} finally {
 			isProcessing = false;
 		}
+	}
+
+	async function retrySubmit() {
+		if (!lastSubmit) return;
+		messages = messages.slice(0, -1);
+		await runCardRequest(lastSubmit, false);
 	}
 
 	async function handleSubmit(e: Event) {
@@ -510,30 +535,21 @@
 		else if (inputMode === 'link') userMessage += `Source (Link): ${linkContent}`;
 		else if (inputMode === 'file' && fileContent)
 			userMessage += `Source (File): ${fileContent.name}`;
-
 		messages = [...messages, { role: 'user', content: userMessage, timestamp: Date.now() }];
 
-		// snapshot values before reset
-		const submitCaseArg = caseArgument;
-		const submitOffcaseArg = offcaseArgument;
-		const submitCardArg = cardArgument;
-		const submitCitation = citation;
-		const submitTextContent = textContent;
-		const submitLinkContent = linkContent;
-		const submitFileContent = fileContent;
-
-		lastSubmit = {
-			caseArg: submitCaseArg,
-			offcaseArg: submitOffcaseArg,
-			cardArg: submitCardArg,
-			citation: submitCitation,
-			textContent: submitTextContent,
-			linkContent: submitLinkContent,
-			fileContent: submitFileContent,
+		const payload: SubmitPayload = {
+			caseArg: caseArgument,
+			offcaseArg: offcaseArgument,
+			cardArg: cardArgument,
+			citation,
+			textContent,
+			linkContent,
+			fileContent,
 			inputMode,
 			side,
 			model
 		};
+		lastSubmit = payload;
 
 		cardArgument = '';
 		textContent = '';
@@ -541,93 +557,7 @@
 		fileContent = null;
 		if (fileInputEl) fileInputEl.value = '';
 
-		isProcessing = true;
-
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-		if (!session) {
-			messages = [
-				...messages,
-				{ role: 'assistant', content: 'You must be logged in to generate cards.' }
-			];
-			isProcessing = false;
-			return;
-		}
-
-		let apiKey = localStorage.getItem('masterdebater_api_key');
-		if (!apiKey) {
-			const keyRes = await fetch('/', {
-				method: 'POST',
-				headers: { Authorization: `Bearer ${session.access_token}` }
-			});
-			if (keyRes.ok) {
-				const keyData = await keyRes.json();
-				apiKey = keyData.api_key;
-				if (apiKey) localStorage.setItem('masterdebater_api_key', apiKey);
-			} else {
-				const errData = await keyRes.json().catch(() => ({ error: 'unknown error' }));
-				console.error('[MasterCard] Key fetch failed:', keyRes.status, errData.error);
-			}
-		}
-
-		if (!apiKey) {
-			messages = [
-				...messages,
-				{
-					role: 'assistant',
-					content: 'Failed to obtain an API key. Please log out and log back in.'
-				}
-			];
-			isProcessing = false;
-			return;
-		}
-
-		const formData = new FormData();
-		formData.append('api_key', apiKey);
-		formData.append('model', model);
-		formData.append('side', side);
-		formData.append('caseArgument', submitCaseArg);
-		formData.append('offcaseArgument', submitOffcaseArg);
-		formData.append('cardArgument', submitCardArg);
-		formData.append('citation', submitCitation);
-		formData.append('inputMode', inputMode);
-		if (inputMode === 'text') formData.append('textContent', submitTextContent);
-		if (inputMode === 'link') formData.append('linkContent', submitLinkContent);
-		if (inputMode === 'file' && submitFileContent)
-			formData.append('fileContent', submitFileContent);
-
-		try {
-			const res = await fetch('/tools/mastercard', {
-				method: 'POST',
-				headers: { Authorization: `Bearer ${session.access_token}` },
-				body: formData
-			});
-
-			if (!res.ok) {
-				const err = await res.json();
-				throw new Error(err.error || 'Failed to generate card');
-			}
-
-			const result = await res.json();
-			const content = result.choices?.[0]?.message?.content || 'No response from AI.';
-
-			// seed empty message then stream characters in
-			messages = [
-				...messages,
-				{ role: 'assistant', content: '', timestamp: Date.now(), modelName: model }
-			];
-			isProcessing = false;
-			streamIntoLast(content);
-			return;
-		} catch (e: any) {
-			messages = [
-				...messages,
-				{ role: 'assistant', content: `Error: ${e.message}`, canRetry: true }
-			];
-		} finally {
-			isProcessing = false;
-		}
+		await runCardRequest(payload, true);
 	}
 </script>
 
@@ -675,7 +605,7 @@
 					</button>
 				</div>
 
-				{#each messages as message, i}
+				{#each messages as message, i (message.timestamp ?? i)}
 					<div class="flex w-full {message.role === 'user' ? 'justify-end' : 'justify-start'}">
 						<div
 							class="group max-w-[85%] rounded-2xl p-4 shadow-sm {message.role === 'user'
@@ -774,6 +704,7 @@
 									? 'text-sm leading-relaxed whitespace-pre-wrap text-on-primary/90'
 									: 'card-display text-foreground'}
 							>
+								<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 								{@html DOMPurify.sanitize(renderDisplay(message.content), {
 									ALLOWED_TAGS: ['strong', 'span', 'mark', 'div', 'br'],
 									ALLOWED_ATTR: ['class', 'style']
@@ -1054,15 +985,15 @@
 
 {#if import.meta.env.DEV}
 	<div class="fixed right-4 bottom-4 z-50 flex flex-col items-end gap-2">
-		{#each DEV_TEST_CASES as tc}
-			<button
-				onclick={() => runDevTest(tc)}
-				disabled={isProcessing}
-				class="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-bold text-black shadow-lg hover:bg-yellow-300 disabled:opacity-50"
-			>
-				⚡ {tc.label}
-			</button>
-		{/each}
+		{#each DEV_TEST_CASES as tc (tc.label)}
+				<button
+					onclick={() => runDevTest(tc)}
+					disabled={isProcessing}
+					class="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-bold text-black shadow-lg hover:bg-yellow-300 disabled:opacity-50"
+				>
+					⚡ {tc.label}
+				</button>
+			{/each}
 	</div>
 {/if}
 

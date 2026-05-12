@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { Send, UploadCloud, FileText, Trash2, Mic, Settings, Copy } from '@lucide/svelte';
-	import { browser } from '$app/environment';
+	import { UploadCloud, Trash2, Mic, Settings, Copy } from '@lucide/svelte';
 	import { processMasterSpeakDoc } from '$lib/masterspeak';
 	import DOMPurify from 'dompurify';
 
@@ -168,7 +167,10 @@
 									? 'text-sm leading-relaxed whitespace-pre-wrap text-on-primary/90'
 									: 'text-sm leading-relaxed text-foreground'}
 							>
-								{@html DOMPurify.sanitize(renderDisplay(message.content), { ALLOWED_TAGS: ['strong','span','mark','div','br'], ALLOWED_ATTR: ['class','style'] })}
+								{@html DOMPurify.sanitize(renderDisplay(message.content), {
+									ALLOWED_TAGS: ['strong', 'span', 'mark', 'div', 'br'],
+									ALLOWED_ATTR: ['class', 'style']
+								})}
 							</div>
 							{#if message.timestamp}
 								<div
@@ -208,7 +210,7 @@
 			<div
 				class="stagger-3 animate-fade-in-up rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border"
 			>
-				<div class="flex flex-col items-center justify-center gap-3 w-full">
+				<div class="flex w-full flex-col items-center justify-center gap-3">
 					<label
 						class="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card transition-all hover:border-primary/40 hover:bg-primary/5"
 					>
