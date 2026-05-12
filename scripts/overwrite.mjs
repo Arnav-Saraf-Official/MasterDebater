@@ -2,15 +2,6 @@ import 'dotenv/config';
 import { execSync } from 'child_process';
 import fs from 'fs';
 
-const type = process.argv[2];
-
-if (!type) {
-	console.error('Missing version type (patch | minor | major)');
-	process.exit(1);
-}
-
-const isPre = type.startsWith('pre');
-
 const GH_OWNER = 'Arnav-Saraf-Official';
 const GH_REPO = 'MasterDebater';
 
@@ -21,7 +12,6 @@ function run(cmd) {
 function runSilent(cmd) {
 	return execSync(cmd, { stdio: 'pipe' }).toString().trim();
 }
-
 
 async function deleteGitHubRelease(version, token) {
 	const tag = `v${version}`;
@@ -71,14 +61,28 @@ try {
 		throw new Error('Missing GH_TOKEN in environment (.env)');
 	}
 
-	console.log('\n📦 Bumping version...\n');
-	const versionArg = isPre ? `${type} --preid=beta` : type;
-	run(`npm version ${versionArg}`);
+	const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
+	const version = pkg.version;
+	const tag = `v${version}`;
 
-	const bumped = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
-	const version = bumped.version;
+	console.log(`\n🔁 Overwriting release for ${tag} (no version bump)...\n`);
 
-	// Delete any existing GitHub release so electron-builder can publish cleanly
+	// Delete local git tag so electron-builder can recreate it
+	try {
+		runSilent(`git tag -d ${tag}`);
+		console.log(`\n🏷  Deleted local git tag ${tag}\n`);
+	} catch {
+		console.log(`\n⚠  Local tag ${tag} not found, skipping delete\n`);
+	}
+
+	// Delete remote git tag
+	try {
+		runSilent(`git push origin :refs/tags/${tag}`);
+		console.log(`\n🏷  Deleted remote git tag ${tag}\n`);
+	} catch {
+		console.log(`\n⚠  Remote tag ${tag} not found, skipping delete\n`);
+	}
+
 	await deleteGitHubRelease(version, process.env.GH_TOKEN);
 
 	console.log(`\n🚀 Building Windows release v${version}...\n`);
@@ -101,9 +105,9 @@ try {
 
 	run('git checkout main');
 
-	console.log('\n✅ Release complete\n');
+	console.log('\n✅ Overwrite complete\n');
 } catch (err) {
-	console.error('\n❌ Release failed\n');
+	console.error('\n❌ Overwrite failed\n');
 	console.error(err);
 	process.exit(1);
 }
