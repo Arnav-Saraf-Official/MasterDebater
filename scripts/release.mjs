@@ -19,6 +19,15 @@ function runSilent(cmd) {
 	return execSync(cmd, { stdio: 'pipe' }).toString().trim();
 }
 
+function tagExists(tag) {
+	try {
+		runSilent(`git rev-parse ${tag}`);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 try {
 	console.log('\n🔍 Checking git state...\n');
 
@@ -42,14 +51,25 @@ try {
 		process.exit(1);
 	}
 
-	console.log('\n📦 Bumping version...\n');
-
-	const versionArg = isPre ? `${type} --preid=beta` : type;
-	run(`npm version ${versionArg}`);
-
-	// read new version AFTER bump
+	// read current version
 	const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
-	const version = pkg.version;
+	const currentTag = `v${pkg.version}`;
+
+	let version;
+
+	if (tagExists(currentTag)) {
+		// Version already bumped and tagged — resume from publish step
+		version = pkg.version;
+		console.log(`\n⏩ Tag ${currentTag} already exists. Skipping version bump, resuming publish...\n`);
+	} else {
+		console.log('\n📦 Bumping version...\n');
+		const versionArg = isPre ? `${type} --preid=beta` : type;
+		run(`npm version ${versionArg}`);
+
+		// read new version AFTER bump
+		const bumped = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
+		version = bumped.version;
+	}
 
 	console.log(`\n🚀 Building Windows release v${version}...\n`);
 
