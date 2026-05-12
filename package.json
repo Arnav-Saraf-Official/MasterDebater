@@ -10,7 +10,7 @@
 		"build": "vite build",
 		"build:electron-main": "node electron/build.mjs",
 		"build:win-release": "vite build && npm run build:electron-main && electron-builder --win --publish always",
-		"build:mac-release": "vite build && npm run build:electron-main && electron-builder --mac --publish always",
+		"build:mac-release": "rm -rf dist/mac dist/mac-arm64 && vite build && npm run build:electron-main && electron-builder --mac --publish always",
 		"build:linux-release": "vite build && npm run build:electron-main && electron-builder --linux --publish always",
 		"build:win": "vite build && npm run build:electron-main && electron-builder --win",
 		"build:mac": "vite build && npm run build:electron-main && electron-builder --mac",
