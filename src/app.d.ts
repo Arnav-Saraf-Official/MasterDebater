@@ -14,6 +14,7 @@ declare global {
 			platform: NodeJS.Platform;
 			openFileDialog: (options: Electron.OpenDialogOptions) => Promise<string[] | undefined>;
 			saveFileDialog: (options: Electron.SaveDialogOptions) => Promise<string | undefined>;
+			openExternal: (url: string) => Promise<void>;
 		};
 	}
 }

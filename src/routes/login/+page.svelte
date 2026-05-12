@@ -67,16 +67,25 @@
 	async function loginWithGoogle() {
 		message = { type: '', text: '' };
 
-		const { error } = await supabase.auth.signInWithOAuth({
+		const { data, error } = await supabase.auth.signInWithOAuth({
 			provider: 'google',
 			options: {
-				// IMPORTANT FOR ELECTRON / DESKTOP APPS
-				redirectTo: 'masterdebater://callback'
+				redirectTo: 'masterdebater://callback',
+				skipBrowserRedirect: true
 			}
 		});
 
 		if (error) {
 			message = { type: 'error', text: error.message };
+			return;
+		}
+
+		if (data?.url) {
+			if (window.electronAPI?.openExternal) {
+				await window.electronAPI.openExternal(data.url);
+			} else {
+				window.location.href = data.url;
+			}
 		}
 	}
 

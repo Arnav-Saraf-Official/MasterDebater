@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import keytar from 'keytar';
@@ -152,6 +152,10 @@ ipcMain.handle('secure:set-api-key', async (_, key: string) => {
 
 ipcMain.handle('secure:get-api-key', async () => {
 	return await keytar.getPassword(SERVICE, ACCOUNT);
+});
+
+ipcMain.handle('shell:open-external', async (_, url: string) => {
+	await shell.openExternal(url);
 });
 
 ipcMain.handle('secure:delete-api-key', async () => {

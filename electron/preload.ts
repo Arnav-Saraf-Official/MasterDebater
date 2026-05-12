@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
 	deleteApiKey: () => ipcRenderer.invoke('secure:delete-api-key'),
 
+	openExternal: (url: string) => ipcRenderer.invoke('shell:open-external', url),
+
 	// ai req
 	callAI: (payload: {
 		prompt: string;
