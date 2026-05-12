@@ -15,11 +15,14 @@ export default defineConfig({
 	build: {
 		target: 'chrome120',
 		minify: 'esbuild',
+		sourcemap: false,
 		rollupOptions: {
 			output: {
 				manualChunks(id) {
 					if (id.includes('@supabase')) return 'supabase';
 					if (id.includes('@lucide/svelte')) return 'icons';
+					if (id.includes('node_modules/docx')) return 'docx';
+					if (id.includes('node_modules/dompurify')) return 'dompurify';
 				}
 			}
 		}

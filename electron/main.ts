@@ -18,23 +18,14 @@ function setupLogging() {
 	if (!isDev) {
 		const logPath = path.join(app.getPath('userData'), 'app.log');
 		const logStream = fs.createWriteStream(logPath, { flags: 'a' });
-		const originalLog = console.log;
 		const originalError = console.error;
-
-		console.log = (...args: any[]) => {
-			const msg = `[${new Date().toISOString()}] LOG: ${args.join(' ')}\n`;
-			logStream.write(msg);
-			originalLog(...args);
-		};
 
 		console.error = (...args: any[]) => {
 			const msg = `[${new Date().toISOString()}] ERROR: ${args.join(' ')}\n`;
 			logStream.write(msg);
 			originalError(...args);
 		};
-
-		console.log('--- Logging initialized ---');
-		console.log('Log file:', logPath);
+		console.log = () => {};
 	}
 }
 
@@ -57,7 +48,7 @@ if (!gotLock) {
 	app.quit();
 } else {
 	console.log('[MasterDebater] Successfully acquired single instance lock.');
-	app.on('second-instance', (event, commandLine) => {
+	app.on('second-instance', (_event, commandLine) => {
 		console.log('[MasterDebater] Received second instance event');
 		if (mainWindow) {
 			if (mainWindow.isMinimized()) mainWindow.restore();

@@ -34,14 +34,20 @@
 
 	function streamIntoLast(content: string) {
 		let i = 0;
+		const CHUNK = 5;
+		const base = messages[messages.length - 1].content;
+		let accumulated = base;
+		const last = messages[messages.length - 1];
 		const interval = setInterval(() => {
-			if (i >= content.length) { clearInterval(interval); return; }
-			messages[messages.length - 1] = {
-				...messages[messages.length - 1],
-				content: messages[messages.length - 1].content + content[i]
-			};
-			i++;
-		}, 8);
+			if (i >= content.length) {
+				clearInterval(interval);
+				return;
+			}
+			const end = Math.min(i + CHUNK, content.length);
+			accumulated += content.slice(i, end);
+			i = end;
+			messages[messages.length - 1] = { ...last, content: accumulated };
+		}, 24);
 	}
 
 	function toggleMenu(index: number, menu: 'copy' | 'dl') {
@@ -61,8 +67,11 @@
 	$effect(() => {
 		localStorage.setItem('mc_model', model);
 	});
+	let _caseArgTimer: ReturnType<typeof setTimeout>;
 	$effect(() => {
-		localStorage.setItem('mc_caseArg', caseArgument);
+		const val = caseArgument;
+		clearTimeout(_caseArgTimer);
+		_caseArgTimer = setTimeout(() => localStorage.setItem('mc_caseArg', val), 300);
 	});
 	$effect(() => {
 		void (messages.length + (isProcessing ? 1 : 0));
@@ -94,8 +103,16 @@
 	};
 	let lastSubmit = $state<SubmitPayload | null>(null);
 
-	let wordCount = $derived(textContent.trim() ? textContent.trim().split(/\s+/).length : 0);
+	let wordCount = $state(0);
 	let charCount = $derived(textContent.length);
+	let _wordCountTimer: ReturnType<typeof setTimeout>;
+	$effect(() => {
+		const text = textContent;
+		clearTimeout(_wordCountTimer);
+		_wordCountTimer = setTimeout(() => {
+			wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+		}, 250);
+	});
 
 	// render only for copy/export
 	function renderContent(raw: string): string {
@@ -120,14 +137,18 @@
 				'<div style="font-family:Calibri,sans-serif;font-size:13pt;font-weight:700;margin-bottom:6px;color:#111;line-height:1.4">$1</div>'
 			)
 			.replace(/<cite>(.*?)<\/cite>/gs, (_, inner) => {
-				const trimmed = inner.trim().replace(/^\|+\s*|\s*\|+$/g, '').trim();
+				const trimmed = inner
+					.trim()
+					.replace(/^\|+\s*|\s*\|+$/g, '')
+					.trim();
 				if (!trimmed) return '';
 				const sepIdx = trimmed.indexOf(' | ');
 				if (sepIdx !== -1) {
 					const short = trimmed.slice(0, sepIdx).trim();
 					const full = trimmed.slice(sepIdx + 3).trim();
 					if (!short && !full) return '';
-					if (!short) return `<div style="font-family:'Times New Roman',Times,serif;font-size:6pt;margin-bottom:4px">[${full}]</div>`;
+					if (!short)
+						return `<div style="font-family:'Times New Roman',Times,serif;font-size:6pt;margin-bottom:4px">[${full}]</div>`;
 					return `<div style="margin-bottom:4px"><span style="font-family:'Times New Roman',Times,serif;font-size:13pt;font-weight:700;color:#111">${short}</span> <span style="font-family:'Times New Roman',Times,serif;font-size:6pt">[${full}]</span></div>`;
 				}
 				return `<div style="font-family:'Times New Roman',Times,serif;font-size:13pt;font-weight:700;margin-bottom:4px;color:#111">${trimmed}</div>`;
@@ -145,7 +166,10 @@
 			.replace(/<spk>(.*?)<\/spk>/gs, '<mark class="cd-spk">$1</mark>')
 			.replace(/<sum>(.*?)<\/sum>/gs, '<div class="cd-sum">$1</div>')
 			.replace(/<cite>(.*?)<\/cite>/gs, (_, inner) => {
-				const trimmed = inner.trim().replace(/^\|+\s*|\s*\|+$/g, '').trim();
+				const trimmed = inner
+					.trim()
+					.replace(/^\|+\s*|\s*\|+$/g, '')
+					.trim();
 				if (!trimmed) return '';
 				const sepIdx = trimmed.indexOf(' | ');
 				if (sepIdx !== -1) {
@@ -185,35 +209,37 @@
 		};
 		const segs: Seg[] = [];
 
-		const re =
-			/<(f[1-5]|spk|sum|cite|b|u|i)>([\s\S]*?)<\/\1>|\*\*([\s\S]*?)\*\*|([^<*]+|[<*])/g;
+		const re = /<(f[1-5]|spk|sum|cite|b|u|i)>([\s\S]*?)<\/\1>|\*\*([\s\S]*?)\*\*|([^<*]+|[<*])/g;
 		let m: RegExpExecArray | null;
 		while ((m = re.exec(raw)) !== null) {
 			if (m[1]) {
 				const tag = m[1];
 				if (tag === 'cite') {
-						const inner = m[2].trim().replace(/^\|+\s*|\s*\|+$/g, '').trim();
-						if (!inner) continue;
-						const sepIdx = inner.indexOf(' | ');
-						if (sepIdx !== -1) {
-							const short = inner.slice(0, sepIdx).trim();
-							const full = inner.slice(sepIdx + 3).trim();
-							if (short) segs.push({ text: short, bold: true, size: 26, cite: true });
-							if (short && full) segs.push({ text: ' ', size: 12, cite: true });
-							if (full) segs.push({ text: `[${full}]`, size: 12, cite: true });
-						} else {
-							segs.push({ text: inner, bold: true, size: 26, cite: true });
-						}
-						continue;
+					const inner = m[2]
+						.trim()
+						.replace(/^\|+\s*|\s*\|+$/g, '')
+						.trim();
+					if (!inner) continue;
+					const sepIdx = inner.indexOf(' | ');
+					if (sepIdx !== -1) {
+						const short = inner.slice(0, sepIdx).trim();
+						const full = inner.slice(sepIdx + 3).trim();
+						if (short) segs.push({ text: short, bold: true, size: 26, cite: true });
+						if (short && full) segs.push({ text: ' ', size: 12, cite: true });
+						if (full) segs.push({ text: `[${full}]`, size: 12, cite: true });
+					} else {
+						segs.push({ text: inner, bold: true, size: 26, cite: true });
 					}
-					const props: Partial<Seg> =
+					continue;
+				}
+				const props: Partial<Seg> =
 					tag === 'b'
 						? { bold: true }
 						: tag === 'u'
 							? {}
 							: tag === 'i'
 								? { italic: true }
-								: TAG_PROPS[tag] ?? {};
+								: (TAG_PROPS[tag] ?? {});
 				segs.push({ text: m[2], ...props });
 			} else if (m[3] !== undefined) {
 				segs.push({ text: m[3], bold: true });
@@ -349,7 +375,8 @@
 			caseArgument: 'Universal Basic Income',
 			offcaseArgument: 'Welfare Reform Disad',
 			cardArgument: 'UBI reduces poverty',
-			citation: 'Johnson 23 | Emily Johnson, 2023, "Unconditional Cash Transfers and Poverty Reduction," Stanford Social Innovation Review',
+			citation:
+				'Johnson 23 | Emily Johnson, 2023, "Unconditional Cash Transfers and Poverty Reduction," Stanford Social Innovation Review',
 			inputMode: 'text',
 			textContent:
 				'The debate over unconditional cash transfers has intensified in recent years as policymakers search for alternatives to means-tested welfare programs. Proponents argue that direct cash grants empower recipients to allocate resources according to their own needs, while critics contend that such programs disincentivize labor force participation. A number of pilot programs have been conducted across the United States, Kenya, Finland, and Canada to evaluate these competing claims empirically. In the most comprehensive domestic study to date, researchers at Stanford University tracked 1,200 low-income households over an eighteen-month period. Participants received unconditional cash transfers of $500 per month with no strings attached and no work requirements. The results were striking: poverty rates fell by 40% among recipients compared to a matched control group receiving traditional welfare benefits. Participants were also measurably more likely to seek employment and pursue educational opportunities, contradicting the disincentive hypothesis. The authors note that the cash transfers allowed families to cover basic needs reliably, reducing the cognitive burden of scarcity that previous research has shown to impair decision-making. Critics of the study point to its limited geographic scope and relatively short timeframe as reasons for caution before scaling the intervention nationally.'
@@ -361,10 +388,11 @@
 			caseArgument: 'Green New Deal',
 			offcaseArgument: 'Economy Disad',
 			cardArgument: 'economic costs outweigh climate benefits',
-			citation: 'Morris 22 | David Morris, 2022, "The Price of Green Ambition," Brookings Institution Press',
+			citation:
+				'Morris 22 | David Morris, 2022, "The Price of Green Ambition," Brookings Institution Press',
 			inputMode: 'text',
 			textContent:
-				'Climate policy has become one of the central fault lines in contemporary American political economy. Advocates of aggressive federal intervention point to the mounting costs of extreme weather events and the long-run risks of unchecked warming. Skeptics of expansive legislation, however, argue that the economic disruption of rapid decarbonization could itself impose severe welfare losses, particularly on working-class communities dependent on fossil fuel industries. The Congressional Budget Office released an assessment in 2022 examining the macroeconomic implications of the Green New Deal framework. The agency estimated total expenditures of between $51 trillion and $93 trillion over ten years — more than double the entirety of current federal spending across all programs and departments combined. The CBO further noted that projected emissions reductions under the proposal were highly uncertain, with modeling ranges spanning from modest reductions to outcomes indistinguishable from a business-as-usual trajectory depending on implementation choices and private sector responses. By contrast, economists across the ideological spectrum have consistently found that a revenue-neutral carbon pricing mechanism could achieve equivalent or superior emissions outcomes at a fraction of the cost, on the order of $300 billion to $1 trillion over the same period. The distributional consequences of the Green New Deal\'s spending provisions also remain contested, with some analysts arguing that the bill\'s labor and procurement requirements would primarily benefit unionized workers in high-cost states rather than the most economically vulnerable communities.'
+				"Climate policy has become one of the central fault lines in contemporary American political economy. Advocates of aggressive federal intervention point to the mounting costs of extreme weather events and the long-run risks of unchecked warming. Skeptics of expansive legislation, however, argue that the economic disruption of rapid decarbonization could itself impose severe welfare losses, particularly on working-class communities dependent on fossil fuel industries. The Congressional Budget Office released an assessment in 2022 examining the macroeconomic implications of the Green New Deal framework. The agency estimated total expenditures of between $51 trillion and $93 trillion over ten years — more than double the entirety of current federal spending across all programs and departments combined. The CBO further noted that projected emissions reductions under the proposal were highly uncertain, with modeling ranges spanning from modest reductions to outcomes indistinguishable from a business-as-usual trajectory depending on implementation choices and private sector responses. By contrast, economists across the ideological spectrum have consistently found that a revenue-neutral carbon pricing mechanism could achieve equivalent or superior emissions outcomes at a fraction of the cost, on the order of $300 billion to $1 trillion over the same period. The distributional consequences of the Green New Deal's spending provisions also remain contested, with some analysts arguing that the bill's labor and procurement requirements would primarily benefit unionized workers in high-cost states rather than the most economically vulnerable communities."
 		}
 	];
 
@@ -742,11 +770,14 @@
 								</div>
 							{/if}
 							<div
-								class="{message.role === 'user'
+								class={message.role === 'user'
 									? 'text-sm leading-relaxed whitespace-pre-wrap text-on-primary/90'
-									: 'card-display text-foreground'}"
+									: 'card-display text-foreground'}
 							>
-								{@html DOMPurify.sanitize(renderDisplay(message.content), { ALLOWED_TAGS: ['strong','span','mark','div','br'], ALLOWED_ATTR: ['class','style'] })}
+								{@html DOMPurify.sanitize(renderDisplay(message.content), {
+									ALLOWED_TAGS: ['strong', 'span', 'mark', 'div', 'br'],
+									ALLOWED_ATTR: ['class', 'style']
+								})}
 							</div>
 							{#if message.canRetry}
 								<button
@@ -990,14 +1021,22 @@
 					type="button"
 					onclick={() => (helpOpen = false)}
 					class="absolute top-3 right-3 rounded p-1 text-muted-foreground hover:text-foreground"
-				><X size={16} /></button>
+					><X size={16} /></button
+				>
 				<h2 class="mb-3 text-base font-semibold text-foreground">MasterCard Guide</h2>
 				<div class="flex flex-col gap-2">
 					<p class="text-sm text-muted-foreground">1. Select your side (Affirmative or Negative)</p>
-					<p class="text-sm text-muted-foreground">2. Provide your case argument — the main position this card supports.</p>
-					<p class="text-sm text-muted-foreground">3. Provide an offcase argument (Optional) — for disadvantages, counterplans, or critiques.</p>
+					<p class="text-sm text-muted-foreground">
+						2. Provide your case argument — the main position this card supports.
+					</p>
+					<p class="text-sm text-muted-foreground">
+						3. Provide an offcase argument (Optional) — for disadvantages, counterplans, or
+						critiques.
+					</p>
 					<p class="text-sm text-muted-foreground">4. Provide your card argument (Optional)</p>
-					<p class="text-sm text-muted-foreground">5. Select one source format (Text, Link, or File)</p>
+					<p class="text-sm text-muted-foreground">
+						5. Select one source format (Text, Link, or File)
+					</p>
 					<p class="text-sm text-muted-foreground">6. Click "Generate Card" to create your card</p>
 				</div>
 			</div>

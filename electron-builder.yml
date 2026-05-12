@@ -3,7 +3,9 @@ directories:
 
 afterPack: electron/afterPack.mjs
 
-asar: false
+asar: true
+asarUnpack:
+  - "**/node_modules/keytar/**"
 
 files:
   - build/**/*

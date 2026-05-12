@@ -20,10 +20,20 @@ export async function createServer(port: number, isDev: boolean): Promise<void> 
 	if (!isDev) {
 		const buildPath = path.join(__dirname, '../build');
 
-		app.use(express.static(buildPath)); //serve
+		// imutalbe caching for hash, no-cache for html
+		app.use(express.static(buildPath, {
+			maxAge: '1y',
+			immutable: true,
+			setHeaders(res, filePath) {
+				if (filePath.endsWith('.html')) {
+					res.setHeader('Cache-Control', 'no-cache');
+				}
+			}
+		}));
 
 		// spa fallback
 		app.use((_req: Request, res: Response) => {
+			res.setHeader('Cache-Control', 'no-cache');
 			res.sendFile(path.join(buildPath, 'index.html'));
 		});
 	}
