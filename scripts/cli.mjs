@@ -4,6 +4,20 @@ import * as readline from 'readline/promises';
 import { stdin as input, stdout as output } from 'process';
 import fs from 'fs';
 
+const c = {
+	reset: '\x1b[0m',
+	bold: '\x1b[1m',
+	red: '\x1b[31m',
+	green: '\x1b[32m',
+	yellow: '\x1b[33m',
+	cyan: '\x1b[36m',
+	gray: '\x1b[90m',
+};
+const info = (msg) => console.log(`${c.cyan}${msg}${c.reset}`);
+const success = (msg) => console.log(`${c.green}${msg}${c.reset}`);
+const warn = (msg) => console.log(`${c.yellow}${msg}${c.reset}`);
+const error = (msg) => console.error(`${c.red}${msg}${c.reset}`);
+
 const GH_OWNER = 'Arnav-Saraf-Official';
 const GH_REPO = 'MasterDebater';
 
@@ -25,7 +39,7 @@ async function pick(rl, question, choices) {
 		const ans = await rl.question(`\n${question}\n${list}\n> `);
 		const idx = parseInt(ans.trim()) - 1;
 		if (idx >= 0 && idx < choices.length) return choices[idx];
-		console.log('  Invalid choice, try again.');
+		console.log('  invalid choice, try again.');
 	}
 }
 
@@ -44,7 +58,7 @@ async function deleteGitHubRelease(version, token) {
 	const releases = await listRes.json();
 	const existing = releases.find((r) => r.tag_name === tag);
 	if (existing) {
-		console.log(`\n🗑  Deleting existing GitHub release for ${tag}...`);
+		info(`\ndeleting existing github release for ${tag}...`);
 		await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/releases/${existing.id}`, {
 			method: 'DELETE',
 			headers
@@ -71,64 +85,61 @@ try {
 
 	const status = runSilent('git status --porcelain');
 	if (status.length > 0) {
-		console.error('\n❌ Working tree is not clean. Commit or stash changes first.');
+		error('\nworking tree is not clean. commit or stash changes first.');
 		process.exit(1);
 	}
 
 	if (fs.existsSync('.git/rebase-apply') || fs.existsSync('.git/rebase-merge')) {
-		console.error('\n❌ Rebase or merge in progress. Abort before releasing.');
+		error('\nrebase or merge in progress. abort before releasing.');
 		process.exit(1);
 	}
 
-	if (!process.env.GH_TOKEN) throw new Error('Missing GH_TOKEN in .env');
+	if (!process.env.GH_TOKEN) throw new Error('missing GH_TOKEN in .env');
 
 	const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
-	console.log(`\nCurrent version: ${pkg.version}`);
+	info(`\ncurrent version: ${pkg.version}`);
 
-	const platform = argPlatform ?? (await pick(rl, 'Target platform?', PLATFORMS));
+	const platform = argPlatform ?? (await pick(rl, 'target platform?', PLATFORMS));
 
 	let version;
 
 	if (argOverwrite || (!argBump && !interactive && !argOverwrite)) {
-		// non-interactive with no bump type = overwrite
 		version = pkg.version;
 	} else if (!argBump) {
-		// interactive bump selection
-		const modeChoice = await pick(rl, 'What do you want to do?', [
-			'Bump & release',
-			'Overwrite current version'
+		const modeChoice = await pick(rl, 'what do you want to do?', [
+			'bump & release',
+			'overwrite current version'
 		]);
-		if (modeChoice === 'Overwrite current version') {
+		if (modeChoice === 'overwrite current version') {
 			version = pkg.version;
 		} else {
-			const bumpChoice = await pick(rl, 'Version bump type?', BUMP_TYPES);
+			const bumpChoice = await pick(rl, 'version bump type?', BUMP_TYPES);
 			argBump = bumpChoice;
 		}
 	}
 
 	if (argBump) {
 		const versionArg = BUMP_MAP[argBump] ?? argBump;
-		console.log('\n📦 Bumping version...');
+		info('\nbumping version...');
 		run(`npm version ${versionArg}`);
 		const bumped = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
 		version = bumped.version;
 	}
 
 	if (!argBump || argOverwrite) {
-		// overwrite path — delete existing tags
 		const tag = `v${version}`;
-		console.log(`\n🔁 Overwriting ${tag} on ${platform}...`);
+		info(`\noverwriting ${tag} on ${platform}...`);
 		try {
 			runSilent(`git tag -d ${tag}`);
-			console.log(`🏷  Deleted local tag ${tag}`);
+			info(`deleted local tag ${tag}`);
 		} catch {
-			console.log(`⚠  Local tag ${tag} not found, skipping`);
+			warn(`local tag ${tag} not found, skipping`);
 		}
 		try {
 			runSilent(`git push origin :refs/tags/${tag}`);
-			console.log(`🏷  Deleted remote tag ${tag}`);
+			info(`deleted remote tag ${tag}`);
 		} catch {
-			console.log(`⚠  Remote tag ${tag} not found, skipping`);
+			warn(`remote tag ${tag} not found, skipping`);
 		}
 	}
 
@@ -136,10 +147,10 @@ try {
 
 	await deleteGitHubRelease(version, process.env.GH_TOKEN);
 
-	console.log(`\n🚀 Building ${platform} release v${version}...`);
+	info(`\nbuilding ${platform} release v${version}...`);
 	run(`cross-env GH_TOKEN=${process.env.GH_TOKEN} npm run build:${platform}-release`);
 
-	console.log('\n🌐 Updating web branch...');
+	info('\nupdating web branch...');
 	run('git checkout web');
 	fs.writeFileSync(
 		'./static/releases/latest.json',
@@ -149,12 +160,13 @@ try {
 	run(`git commit -m "release ${version}"`);
 	run('git push');
 
-	console.log('\n🔙 Returning to main...');
+	info('\nreturning to main...');
 	run('git checkout main');
 
-	console.log('\n✅ Release complete\n');
+	success('\nrelease complete\n');
 } catch (err) {
 	rl.close();
-	console.error('\n❌ Release failed\n', err);
+	error('\nrelease failed\n');
+	console.error(err);
 	process.exit(1);
 }
