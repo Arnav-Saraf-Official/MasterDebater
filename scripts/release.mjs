@@ -11,6 +11,9 @@ if (!type) {
 
 const isPre = type.startsWith('pre');
 
+const GH_OWNER = 'Arnav-Saraf-Official';
+const GH_REPO = 'MasterDebater';
+
 function run(cmd) {
 	return execSync(cmd, { stdio: 'inherit' });
 }
@@ -28,6 +31,31 @@ function tagExists(tag) {
 	}
 }
 
+async function deleteGitHubRelease(version, token) {
+	const tag = `v${version}`;
+	const headers = {
+		Authorization: `Bearer ${token}`,
+		Accept: 'application/vnd.github+json',
+		'X-GitHub-Api-Version': '2022-11-28',
+		'User-Agent': 'masterdebater-release-script'
+	};
+
+	const listRes = await fetch(
+		`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/releases?per_page=10`,
+		{ headers }
+	);
+	const releases = await listRes.json();
+	const existing = releases.find((r) => r.tag_name === tag);
+
+	if (existing) {
+		console.log(`\n🗑  Deleting existing GitHub release for ${tag}...\n`);
+		await fetch(
+			`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/releases/${existing.id}`,
+			{ method: 'DELETE', headers }
+		);
+	}
+}
+
 try {
 	console.log('\n🔍 Checking git state...\n');
 
@@ -40,15 +68,15 @@ try {
 		process.exit(1);
 	}
 
-	try {
-		runSilent('git rev-parse --git-path REBASE_HEAD');
-	} catch {}
-
 	const isRebasing = fs.existsSync('.git/rebase-apply') || fs.existsSync('.git/rebase-merge');
 
 	if (isRebasing) {
 		console.error('❌ Rebase or merge in progress. Abort before releasing.');
 		process.exit(1);
+	}
+
+	if (!process.env.GH_TOKEN) {
+		throw new Error('Missing GH_TOKEN in environment (.env)');
 	}
 
 	// read current version
@@ -58,7 +86,6 @@ try {
 	let version;
 
 	if (tagExists(currentTag)) {
-		// Version already bumped and tagged — resume from publish step
 		version = pkg.version;
 		console.log(`\n⏩ Tag ${currentTag} already exists. Skipping version bump, resuming publish...\n`);
 	} else {
@@ -66,34 +93,24 @@ try {
 		const versionArg = isPre ? `${type} --preid=beta` : type;
 		run(`npm version ${versionArg}`);
 
-		// read new version AFTER bump
 		const bumped = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
 		version = bumped.version;
 	}
 
+	// Delete any existing GitHub release so electron-builder can publish cleanly
+	await deleteGitHubRelease(version, process.env.GH_TOKEN);
+
 	console.log(`\n🚀 Building Windows release v${version}...\n`);
 
-	if (!process.env.GH_TOKEN) {
-		throw new Error('Missing GH_TOKEN in environment (.env)');
-	}
-
-	// build + publish via electron-builder
 	run(`cross-env GH_TOKEN=${process.env.GH_TOKEN} npm run build:win-release`);
 
 	console.log('\n🌐 Updating web branch...\n');
 
-	// switch to web branch
 	run('git checkout web');
 
-	// update latest.json (adjust path if needed)
 	const jsonPath = './static/releases/latest.json';
 
-	const data = {
-		version,
-		date: new Date().toISOString()
-	};
-
-	fs.writeFileSync(jsonPath, JSON.stringify(data, null, 2));
+	fs.writeFileSync(jsonPath, JSON.stringify({ version, date: new Date().toISOString() }, null, 2));
 
 	run('git add .');
 	run(`git commit -m "release ${version}"`);
