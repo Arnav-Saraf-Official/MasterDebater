@@ -1,6 +1,8 @@
 directories:
   output: dist
 
+afterPack: electron/afterPack.mjs
+
 asar: false
 
 files:
