@@ -28,7 +28,6 @@
 		onmouseenter={() => (hovering = true)}
 		onmouseleave={() => (hovering = false)}
 	>
-		<!-- Brand & Version -->
 		<a href={loggedIn ? '/tools' : '/'} class="flex shrink-0 items-center gap-3 px-6 py-3">
 			<span class="text-primary-muted font-heading text-xl font-medium tracking-wide"
 				>MasterDebater</span
@@ -39,29 +38,32 @@
 			>
 		</a>
 
-		<!-- Expanded Content -->
 		{#if hovering}
 			<div transition:slide={{ axis: 'x', duration: 400 }} class="flex items-center">
 				<div class="h-6 w-[1px] bg-primary/20"></div>
 				<a
 					href="/about"
-					class="press-feedback mx-2 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium whitespace-nowrap text-on-primary transition-colors hover:bg-primary/90"
+					class="press-feedback mx-2 rounded-lg px-4 py-1.5 text-xs font-medium whitespace-nowrap transition-colors {page.url.pathname === '/about' ? 'bg-primary/20 text-primary ring-1 ring-primary/30' : 'bg-primary text-on-primary hover:bg-primary/90'}"
 				>
 					About
 				</a>
 				<a
 					href="/tools/mastercard"
-					class="press-feedback mx-2 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium whitespace-nowrap text-on-primary transition-colors hover:bg-primary/90"
+					class="press-feedback mx-2 rounded-lg px-4 py-1.5 text-xs font-medium whitespace-nowrap transition-colors {page.url.pathname === '/tools/mastercard' ? 'bg-primary/20 text-primary ring-1 ring-primary/30' : 'bg-primary text-on-primary hover:bg-primary/90'}"
 				>
 					MasterCard
 				</a>
 				<a
 					href="/tools/masterspeak"
-					class="press-feedback mx-2 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium whitespace-nowrap text-on-primary transition-colors hover:bg-primary/90"
+					class="press-feedback mx-2 rounded-lg px-4 py-1.5 text-xs font-medium whitespace-nowrap transition-colors {page.url.pathname === '/tools/masterspeak' ? 'bg-primary/20 text-primary ring-1 ring-primary/30' : 'bg-primary text-on-primary hover:bg-primary/90'}"
 				>
 					MasterSpeak
 				</a>
-				{#if page.url.pathname !== '/login'}
+				{#if loggedIn}
+					<a class="press-feedback mr-4 text-primary" href="/settings" aria-label="Account">
+						<User size={20} strokeWidth={2.5} />
+					</a>
+				{:else if page.url.pathname !== '/login'}
 					<a class="press-feedback mr-4 text-primary" href="/login" aria-label="Login">
 						<User size={20} strokeWidth={2.5} />
 					</a>
@@ -72,7 +74,6 @@
 			</div>
 		{/if}
 
-		<!-- Menu Icon Wrapper -->
 		<div class="menu-trigger flex items-center pr-3 pl-3">
 			<Menu size={20} class="text-primary" strokeWidth={2.5} />
 		</div>

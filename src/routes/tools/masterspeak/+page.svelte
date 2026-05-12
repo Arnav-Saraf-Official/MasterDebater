@@ -28,12 +28,16 @@
 			const file = target.files[0];
 			if (file.name.endsWith('.docx')) {
 				fileContent = file;
-				handleSubmit();
 			} else {
 				triggerToast('Only .docx files are accepted.');
 				if (fileInputEl) fileInputEl.value = '';
 			}
 		}
+	}
+
+	function clearFile() {
+		fileContent = null;
+		if (fileInputEl) fileInputEl.value = '';
 	}
 
 	async function handleSubmit() {
@@ -204,7 +208,7 @@
 			<div
 				class="stagger-3 animate-fade-in-up rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border"
 			>
-				<div class="flex flex-col items-center justify-center">
+				<div class="flex flex-col items-center justify-center gap-3 w-full">
 					<label
 						class="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card transition-all hover:border-primary/40 hover:bg-primary/5"
 					>
@@ -227,6 +231,26 @@
 							disabled={isProcessing}
 						/>
 					</label>
+					{#if fileContent}
+						<div class="flex w-full gap-2">
+							<button
+								type="button"
+								onclick={handleSubmit}
+								disabled={isProcessing}
+								class="press-feedback flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								{isProcessing ? 'Processing…' : 'Process File'}
+							</button>
+							<button
+								type="button"
+								onclick={clearFile}
+								disabled={isProcessing}
+								class="press-feedback rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground ring-1 ring-border transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								Cancel
+							</button>
+						</div>
+					{/if}
 				</div>
 			</div>
 		</div>

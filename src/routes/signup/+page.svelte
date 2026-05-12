@@ -51,11 +51,18 @@
 
 	async function signupWithGoogle() {
 		message = { type: '', text: '' };
-		const { error } = await supabase.auth.signInWithOAuth({
+		const { data, error } = await supabase.auth.signInWithOAuth({
 			provider: 'google',
-			options: { redirectTo: 'masterdebater://callback' }
+			options: { redirectTo: 'masterdebater://callback', skipBrowserRedirect: true }
 		});
-		if (error) message = { type: 'error', text: error.message };
+		if (error) { message = { type: 'error', text: error.message }; return; }
+		if (data?.url) {
+			if (window.electronAPI?.openExternal) {
+				await window.electronAPI.openExternal(data.url);
+			} else {
+				window.location.href = data.url;
+			}
+		}
 	}
 </script>
 
