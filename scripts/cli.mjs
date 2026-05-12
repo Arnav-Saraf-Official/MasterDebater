@@ -43,24 +43,41 @@ async function pick(rl, question, choices) {
 	}
 }
 
-// returns [{tag, version, label}] sorted newest first
-function listTags() {
-	const raw = runSilent('git tag -l --sort=-version:refname');
-	if (!raw) return [];
-	return raw.split('\n').map((tag) => {
-		const date = runSilent(`git log -1 --format=%ci ${tag}`).slice(0, 10);
-		const subject = runSilent(`git log -1 --format=%s ${tag}`);
-		const version = tag.replace(/^v/, '');
-		return { tag, version, label: `${tag}  ${c.gray}${date}  ${subject}${c.reset}` };
+// fetches all github releases including drafts, sorted newest first
+async function listReleases(token) {
+	const headers = {
+		Authorization: `Bearer ${token}`,
+		Accept: 'application/vnd.github+json',
+		'X-GitHub-Api-Version': '2022-11-28',
+		'User-Agent': 'masterdebater-release-script'
+	};
+	const res = await fetch(
+		`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/releases?per_page=20`,
+		{ headers }
+	);
+	const releases = await res.json();
+	return releases.map((r) => {
+		const date = r.created_at.slice(0, 10);
+		const status = r.draft
+			? `${c.yellow}draft${c.reset}`
+			: r.prerelease
+				? `${c.cyan}pre${c.reset}`
+				: `${c.green}release${c.reset}`;
+		const version = r.tag_name.replace(/^v/, '');
+		return {
+			tag: r.tag_name,
+			version,
+			id: r.id,
+			label: `${r.tag_name}  ${c.gray}${date}  ${status}`
+		};
 	});
 }
 
-async function pickTag(rl, question) {
-	const tags = listTags();
-	if (!tags.length) throw new Error('no git tags found');
-	return pick(rl, question, tags.map((t) => t.label)).then((label) => {
-		return tags.find((t) => t.label === label);
-	});
+async function pickRelease(rl, question, token) {
+	const releases = await listReleases(token);
+	if (!releases.length) throw new Error('no github releases found');
+	const chosen = await pick(rl, question, releases.map((r) => r.label));
+	return releases.find((r) => r.label === chosen);
 }
 
 async function deleteGitHubRelease(version, token) {
@@ -157,14 +174,14 @@ try {
 		const bumped = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
 		version = bumped.version;
 	} else {
-		// overwrite or append — pick a tag
+		// overwrite or append — pick from github releases (includes drafts)
 		let chosen;
 		if (argTag) {
-			const tags = listTags();
-			chosen = tags.find((t) => t.tag === argTag || t.tag === `v${argTag}`);
-			if (!chosen) throw new Error(`tag ${argTag} not found`);
+			const releases = await listReleases(process.env.GH_TOKEN);
+			chosen = releases.find((r) => r.tag === argTag || r.tag === `v${argTag}`);
+			if (!chosen) throw new Error(`release ${argTag} not found on github`);
 		} else {
-			chosen = await pickTag(rl, `which release to ${mode}?`);
+			chosen = await pickRelease(rl, `which release to ${mode}?`, process.env.GH_TOKEN);
 		}
 		version = chosen.version;
 
