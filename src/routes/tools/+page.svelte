@@ -22,7 +22,7 @@
 </script>
 
 <svelte:head>
-	<title>Tools | MasterDebater</title>
+	<title>Tools | Artha</title>
 </svelte:head>
 
 <section class="flex min-h-[50vh] flex-col justify-center py-section">

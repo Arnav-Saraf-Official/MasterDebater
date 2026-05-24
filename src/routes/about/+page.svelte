@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-	<title>About | MasterDebater</title>
+	<title>About | Artha</title>
 </svelte:head>
 
 <section class="flex min-h-[50vh] flex-col justify-center py-section">
@@ -16,7 +16,7 @@
 				<Info size={14} /> About The Project
 			</div>
 			<h1 class="mt-6 font-heading text-5xl font-medium text-foreground md:text-7xl">
-				MasterDebater
+				Artha
 			</h1>
 			<p class="mt-6 max-w-2xl text-lg leading-relaxed text-secondary md:text-xl">
 				The ultimate companion for structured debate. Built for precision, performance, and a
@@ -34,7 +34,7 @@
 			>
 				<h2>Our Mission</h2>
 				<p>
-					MasterDebater was built to solve a simple problem: managing structured debates shouldn't
+					Artha was built to solve a simple problem: managing structured debates shouldn't
 					be harder than the debate itself. We provide the tools you need to research, organize, and
 					execute flawless arguments without relying on scattered notes or clunky spreadsheets.
 				</p>
@@ -57,13 +57,13 @@
 
 				<h2>Meet the Creator</h2>
 				<p>
-					MasterDebater is developed and maintained by <strong>Arnav Saraf</strong>. Driven by a
-					passion for AI models and his experience with debate, he created MasterDebater to help new
+					Artha is developed and maintained by <strong>Arnav Saraf</strong>. Driven by a
+					passion for AI models and his experience with debate, he created Artha to help new
 					members get started with debate quickly.
 				</p>
 				<p>
 					We believe that the best tools are built collaboratively. If you'd like to explore how
-					MasterDebater works under the hood or contribute to its development, you can view the
+					Artha works under the hood or contribute to its development, you can view the
 					source code and documentation on
 					<a
 						href="https://github.com/Arnav-Saraf-Official/MasterDebater"

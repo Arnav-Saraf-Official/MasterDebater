@@ -67,7 +67,7 @@
 </script>
 
 <svelte:head>
-	<title>Sign Up | MasterDebater</title>
+	<title>Sign Up | Artha</title>
 </svelte:head>
 
 <div class="relative grid min-h-[calc(100vh-120px)] w-full grid-cols-1 lg:grid-cols-2">

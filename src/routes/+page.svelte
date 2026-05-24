@@ -23,7 +23,7 @@
 </script>
 
 <svelte:head>
-	<title>MasterDebater</title>
+	<title>Artha</title>
 	<meta
 		name="description"
 		content="A thoughtful tool for structured debate preparation and argument building."
@@ -39,7 +39,7 @@
 		<div class="mx-auto w-full max-w-[80vw]">
 			<AnimateOnScroll animation="animate-fade-in-up" stagger={1}>
 				<h2 class="font-heading text-4xl font-medium text-foreground md:text-5xl">
-					Why MasterDebater?
+					Why Artha?
 				</h2>
 			</AnimateOnScroll>
 

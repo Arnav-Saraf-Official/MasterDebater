@@ -91,7 +91,7 @@ async function createWindow(): Promise<void> {
 		height: 800,
 		minWidth: 375,
 		minHeight: 600,
-		title: 'MasterDebater',
+		title: 'Artha',
 		backgroundColor: '#FFFBEB',
 		show: false,
 		webPreferences: {

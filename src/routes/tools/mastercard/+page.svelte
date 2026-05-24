@@ -562,7 +562,7 @@
 </script>
 
 <svelte:head>
-	<title>MasterCard Chat | MasterDebater</title>
+	<title>MasterCard Chat | Artha</title>
 </svelte:head>
 
 <div class="mx-auto flex min-h-[calc(100vh-200px)] w-full max-w-[95vw] flex-col px-6 pt-32 pb-12">

@@ -30,7 +30,7 @@
 	>
 		<a href={loggedIn ? '/tools' : '/'} class="flex shrink-0 items-center gap-3 px-6 py-3">
 			<span class="text-primary-muted font-heading text-xl font-medium tracking-wide"
-				>MasterDebater</span
+				>Artha</span
 			>
 			<span
 				class="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold tracking-widest text-primary uppercase"

@@ -97,7 +97,7 @@
 </script>
 
 <svelte:head>
-	<title>MasterSpeak | MasterDebater</title>
+	<title>MasterSpeak | Artha</title>
 </svelte:head>
 
 <div class="mx-auto flex min-h-[calc(100vh-200px)] w-full max-w-[95vw] flex-col px-6 pt-32 pb-12">

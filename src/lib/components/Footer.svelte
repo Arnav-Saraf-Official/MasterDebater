@@ -7,7 +7,7 @@
 		class="mx-auto flex w-full max-w-[680px] flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row"
 	>
 		<AnimateOnScroll animation="animate-fade-in" stagger={1}>
-			<p>&copy; {new Date().getFullYear()} MasterDebater</p>
+			<p>&copy; {new Date().getFullYear()} Artha</p>
 		</AnimateOnScroll>
 
 		<AnimateOnScroll animation="animate-fade-in" stagger={2}>

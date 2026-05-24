@@ -70,7 +70,7 @@
 </script>
 
 <svelte:head>
-	<title>Authenticating | MasterDebater</title>
+	<title>Authenticating | Artha</title>
 </svelte:head>
 
 <div class="flex min-h-[70vh] flex-col items-center justify-center bg-background px-6">

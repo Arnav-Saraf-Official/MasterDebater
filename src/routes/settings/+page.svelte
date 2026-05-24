@@ -101,7 +101,7 @@
 </script>
 
 <svelte:head>
-	<title>Settings | MasterDebater</title>
+	<title>Settings | Artha</title>
 </svelte:head>
 
 <main id="main-content">

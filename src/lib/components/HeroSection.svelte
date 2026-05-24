@@ -24,7 +24,7 @@
 		<!-- Main heading — right-aligned, Cormorant serif -->
 		<AnimateOnScroll animation="animate-fade-in-up" stagger={2}>
 			<h1 class="mt-4 font-heading text-5xl leading-tight font-medium text-foreground md:text-7xl">
-				MasterDebater
+				Artha
 			</h1>
 		</AnimateOnScroll>
 
